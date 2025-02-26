@@ -6,17 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up() {
-        Schema::create('evidence_photos', function (Blueprint $table) {
+        Schema::create('order_photos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-            $table->enum('photo_type', ['Loaded', 'Delivered']); // Foto de carga o de entrega
-            $table->string('photo_path'); // Ruta de la imagen en el almacenamiento
+            $table->string('photo_path');
+            $table->enum('type', ['loaded', 'delivered']);
             $table->timestamps();
         });
     }
 
     public function down() {
-        Schema::dropIfExists('evidence_photos');
+        Schema::dropIfExists('order_photos');
     }
 };
 

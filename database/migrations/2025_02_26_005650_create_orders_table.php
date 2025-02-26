@@ -11,12 +11,11 @@ return new class extends Migration {
             $table->string('invoice_number')->unique();
             $table->string('customer_name');
             $table->string('customer_number')->unique();
-            $table->string('fiscal_data');
+            $table->text('fiscal_data');
             $table->dateTime('order_date');
-            $table->text('delivery_address');
+            $table->string('delivery_address');
             $table->text('notes')->nullable();
             $table->enum('status', ['Ordered', 'In process', 'In route', 'Delivered'])->default('Ordered');
-            $table->boolean('deleted')->default(false);
             $table->timestamps();
         });
     }

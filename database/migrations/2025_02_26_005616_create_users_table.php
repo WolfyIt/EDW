@@ -6,16 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up() {
-        Schema::create('order_assignments', function (Blueprint $table) {
+        Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('name');
+            $table->string('email')->unique();
+            $table->string('password');
+            $table->foreignId('role_id')->constrained('roles');
             $table->timestamps();
         });
     }
 
     public function down() {
-        Schema::dropIfExists('order_assignments');
+        Schema::dropIfExists('users');
     }
 };
 
