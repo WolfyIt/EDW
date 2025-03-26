@@ -7,9 +7,10 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up() {
         Schema::create('cache', function (Blueprint $table) {
-            $table->string('key')->primary();
+            $table->id();
+            $table->string('key')->unique();
             $table->text('value');
-            $table->integer('expiration');
+            $table->timestamps();
         });
     }
 
@@ -17,4 +18,5 @@ return new class extends Migration {
         Schema::dropIfExists('cache');
     }
 };
+
 

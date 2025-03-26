@@ -12,7 +12,10 @@ return new class extends Migration {
             $table->string('email')->unique();
             $table->string('password');
             $table->foreignId('role_id')->constrained('roles');
+            $table->timestamp('email_verified_at')->nullable(); // Aquí agregamos la columna email_verified_at
+            $table->rememberToken();
             $table->timestamps();
+
         });
     }
 
@@ -20,4 +23,5 @@ return new class extends Migration {
         Schema::dropIfExists('users');
     }
 };
+
 
