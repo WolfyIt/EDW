@@ -1,0 +1,250 @@
+<!-- resources/views/private/dashboard.blade.php -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Halcon</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <style>
+        :root {
+            --primary-color: #000000;
+            --secondary-color: #86868b;
+            --accent-color: #0066cc;
+            --background-color: #ffffff;
+            --border-color: #d2d2d7;
+            --hover-color: #f5f5f7;
+            --success-color: #34c759;
+            --error-color: #ff3b30;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.5;
+            color: var(--primary-color);
+            background-color: var(--background-color);
+        }
+
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            color: var(--primary-color);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+            transition: color 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 80px auto 0;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 3rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, #000000, #333333);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .page-subtitle {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-description {
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+
+        .welcome-section {
+            background: linear-gradient(135deg, #f5f5f7 0%, #ffffff 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .welcome-text {
+            color: var(--secondary-color);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: #f8f9fa;
+            color: #212529;
+            text-decoration: none;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .back-button:hover {
+            background-color: var(--hover-color);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .back-button::before {
+            content: "←";
+            margin-right: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                margin-top: 60px;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .nav {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <a href="{{ route('private.dashboard') }}" class="nav-logo">Halcon</a>
+        <div class="nav-links">
+            <a href="{{ route('private.orders.index') }}" class="nav-link">Orders</a>
+            <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <a href="{{ route('home') }}" class="back-button">
+                ← Back to Home
+            </a>
+            <h1 class="page-title">Dashboard</h1>
+            <p class="page-subtitle">Welcome to your control center</p>
+        </div>
+
+        <div class="welcome-section">
+            <h2 class="welcome-title">Welcome to Halcon Admin Dashboard</h2>
+            <p class="welcome-text">Manage your orders, users, and system settings from this central hub. Select an option below to get started.</p>
+        </div>
+
+        <div class="dashboard-grid">
+            <a href="{{ route('private.orders.index') }}" class="dashboard-card">
+                <div class="card-icon">📦</div>
+                <h3 class="card-title">Orders</h3>
+                <p class="card-description">View and manage all orders in the system</p>
+            </a>
+
+            <a href="{{ route('private.users.index') }}" class="dashboard-card">
+                <div class="card-icon">👥</div>
+                <h3 class="card-title">Users</h3>
+                <p class="card-description">Manage user accounts and permissions</p>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

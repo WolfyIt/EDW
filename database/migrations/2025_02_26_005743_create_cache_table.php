@@ -10,6 +10,7 @@ return new class extends Migration {
             $table->id();
             $table->string('key')->unique();
             $table->text('value');
+            $table->integer('expiration');  // Agregar la columna expiration
             $table->timestamps();
         });
     }
@@ -18,5 +19,6 @@ return new class extends Migration {
         Schema::dropIfExists('cache');
     }
 };
+
 
 

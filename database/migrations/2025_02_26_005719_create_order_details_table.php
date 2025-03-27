@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->integer('quantity');
             $table->decimal('price', 10, 2);
             $table->timestamps();
+            $table->string('product_name')->nullable();
         });
     }
 

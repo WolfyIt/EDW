@@ -1,19 +1,17 @@
 <?php
 
+// database/seeders/RolesSeeder.php
 namespace Database\Seeders;
 
+use App\Models\Role;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
 
 class RolesSeeder extends Seeder
 {
     public function run()
     {
-        // Insertar roles predeterminados si no existen
-        DB::table('roles')->insert([
-            ['name' => 'Admin', 'created_at' => now(), 'updated_at' => now()],
-            ['name' => 'User', 'created_at' => now(), 'updated_at' => now()],
-        ]);
+        // Usar la factory para crear roles automáticamente
+        Role::factory(2)->create(); // Crea 2 roles aleatorios
     }
 }
 
