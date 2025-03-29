@@ -1,10 +1,10 @@
-<!-- resources/views/private/users/create.blade.php -->
+<!-- resources/views/private/customers/index.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create User - Halcon</title>
+    <title>Customers - Halcon</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <style>
         :root {
@@ -70,13 +70,16 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 80px auto 0;
             padding: 2rem;
         }
 
         .page-header {
             margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .page-title {
@@ -93,51 +96,6 @@
             font-size: 1.1rem;
         }
 
-        .form-card {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
-            color: var(--primary-color);
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-        }
-
-        .error-message {
-            color: var(--error-color);
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
         .button {
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
@@ -147,6 +105,9 @@
             transition: all 0.3s ease;
             cursor: pointer;
             border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .button-primary {
@@ -154,15 +115,15 @@
             color: white;
         }
 
-        .button-secondary {
-            background-color: #f8f9fa;
-            color: var(--primary-color);
-            border: 1px solid var(--border-color);
-        }
-
-        .button:hover {
+        .button-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-primary::before {
+            content: "+";
+            font-size: 1.2rem;
+            font-weight: 300;
         }
 
         .back-button {
@@ -192,6 +153,77 @@
             font-size: 1.1rem;
         }
 
+        .table-container {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        th {
+            text-align: left;
+            padding: 1rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: var(--hover-color);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-button {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .view-button {
+            color: var(--accent-color);
+            background-color: rgba(0, 102, 204, 0.1);
+        }
+
+        .edit-button {
+            color: var(--success-color);
+            background-color: rgba(52, 199, 89, 0.1);
+        }
+
+        .delete-button {
+            color: var(--error-color);
+            background-color: rgba(255, 59, 48, 0.1);
+            border: none;
+            cursor: pointer;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
         .alert {
             padding: 1rem;
             border-radius: 8px;
@@ -199,10 +231,10 @@
             font-size: 0.9rem;
         }
 
-        .alert-danger {
-            background-color: #ffebee;
-            color: var(--error-color);
-            border: 1px solid #ffcdd2;
+        .alert-success {
+            background-color: #e8f5e9;
+            color: var(--success-color);
+            border: 1px solid #c8e6c9;
         }
 
         @media (max-width: 768px) {
@@ -223,8 +255,14 @@
                 display: none;
             }
 
-            .form-card {
-                padding: 1.5rem;
+            .table-container {
+                padding: 1rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
             }
         }
     </style>
@@ -242,72 +280,56 @@
 
     <div class="container">
         <div class="page-header">
-            <a href="{{ route('private.users.index') }}" class="back-button">
-                ← Back to Users
-            </a>
-            <h1 class="page-title">Create User</h1>
-            <p class="page-subtitle">Add a new user to the system</p>
+            <div>
+                <a href="{{ route('private.dashboard') }}" class="back-button">
+                    Back to Dashboard
+                </a>
+                <h1 class="page-title">Customers</h1>
+                <p class="page-subtitle">Manage your customer database</p>
+            </div>
+            <a href="{{ route('private.customers.create') }}" class="button button-primary">New Customer</a>
         </div>
 
-        @if($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+        @if(session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
             </div>
         @endif
 
-        <div class="form-card">
-            <form action="{{ route('private.users.store') }}" method="POST">
-                @csrf
-                
-                <div class="form-group">
-                    <label for="name" class="form-label">Name</label>
-                    <input type="text" id="name" name="name" class="form-input" value="{{ old('name') }}" required>
-                    @error('name')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="email" class="form-label">Email</label>
-                    <input type="email" id="email" name="email" class="form-input" value="{{ old('email') }}" required>
-                    @error('email')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" id="password" name="password" class="form-input" required>
-                    @error('password')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="role_id" class="form-label">Role</label>
-                    <select id="role_id" name="role_id" class="form-input" required>
-                        <option value="">Select a role</option>
-                        @foreach($roles as $role)
-                            <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
-                                {{ $role->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('role_id')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="button-group">
-                    <button type="submit" class="button button-primary">Create User</button>
-                    <a href="{{ route('private.users.index') }}" class="button button-secondary">Cancel</a>
-                </div>
-            </form>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Address</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($customers as $customer)
+                        <tr>
+                            <td>{{ $customer->name }}</td>
+                            <td>{{ $customer->email }}</td>
+                            <td>{{ $customer->phone }}</td>
+                            <td>{{ $customer->address }}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{{ route('private.customers.show', $customer) }}" class="action-button view-button">View</a>
+                                    <a href="{{ route('private.customers.edit', $customer) }}" class="action-button edit-button">Edit</a>
+                                    <form action="{{ route('private.customers.destroy', $customer) }}" method="POST" style="display: inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="action-button delete-button" onclick="return confirm('Are you sure you want to delete this customer?')">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 </body>
-</html>
+</html> 

@@ -11,23 +11,51 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
-        'invoice_number',
-        'customer_name',
+        'order_number',
         'customer_number',
-        'fiscal_data',
-        'created_at',
-        'delivery_address',
-        'notes',
+        'invoice_number',
+        'customer_id',
+        'user_id',
         'status',
-        'photo_path',
-        'order_date'
+        'total_amount',
+        'notes',
     ];
 
-    protected $dates = [
-        'created_at',
-        'updated_at',
-        'order_date'
+    protected $casts = [
+        'total_amount' => 'decimal:2',
     ];
+
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_PROCESSING = 'processing';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    public static function getStatuses(): array
+    {
+        return [
+            self::STATUS_PENDING,
+            self::STATUS_PROCESSING,
+            self::STATUS_COMPLETED,
+            self::STATUS_CANCELLED,
+        ];
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'order_product')
+            ->withPivot('quantity', 'price')
+            ->withTimestamps();
+    }
 }
 
 

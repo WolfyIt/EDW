@@ -1,11 +1,10 @@
-<!-- resources/views/private/orders/edit.blade.php -->
-
+<!-- resources/views/private/customers/edit.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Order - Halcon</title>
+    <title>Edit Customer - Halcon</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <style>
         :root {
@@ -112,7 +111,7 @@
             color: var(--primary-color);
         }
 
-        .form-input, .form-select {
+        .form-input {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid var(--border-color);
@@ -121,7 +120,7 @@
             transition: all 0.3s ease;
         }
 
-        .form-input:focus, .form-select:focus {
+        .form-input:focus {
             outline: none;
             border-color: var(--accent-color);
             box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
@@ -243,11 +242,11 @@
 
     <div class="container">
         <div class="page-header">
-            <a href="{{ route('private.orders.index') }}" class="back-button">
-                Back to Orders
+            <a href="{{ route('private.customers.index') }}" class="back-button">
+                Back to Customers
             </a>
-            <h1 class="page-title">Edit Order</h1>
-            <p class="page-subtitle">Update order information</p>
+            <h1 class="page-title">Edit Customer</h1>
+            <p class="page-subtitle">Update customer information</p>
         </div>
 
         @if($errors->any())
@@ -261,70 +260,48 @@
         @endif
 
         <div class="form-card">
-            <form action="{{ route('private.orders.update', $order) }}" method="POST">
+            <form action="{{ route('private.customers.update', $customer) }}" method="POST">
                 @csrf
                 @method('PUT')
                 
                 <div class="form-group">
-                    <label for="order_number" class="form-label">Order Number</label>
-                    <input type="text" id="order_number" name="order_number" class="form-input" value="{{ old('order_number', $order->order_number) }}" required>
-                    @error('order_number')
+                    <label for="name" class="form-label">Name</label>
+                    <input type="text" id="name" name="name" class="form-input" value="{{ old('name', $customer->name) }}" required>
+                    @error('name')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="form-group">
-                    <label for="customer_number" class="form-label">Customer Number</label>
-                    <input type="text" id="customer_number" name="customer_number" class="form-input" value="{{ old('customer_number', $order->customer->name) }}" required>
-                    @error('customer_number')
+                    <label for="email" class="form-label">Email</label>
+                    <input type="email" id="email" name="email" class="form-input" value="{{ old('email', $customer->email) }}" required>
+                    @error('email')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="form-group">
-                    <label for="invoice_number" class="form-label">Invoice Number</label>
-                    <input type="text" id="invoice_number" name="invoice_number" class="form-input" value="{{ old('invoice_number', $order->invoice_number) }}" required>
-                    @error('invoice_number')
+                    <label for="phone" class="form-label">Phone</label>
+                    <input type="tel" id="phone" name="phone" class="form-input" value="{{ old('phone', $customer->phone) }}">
+                    @error('phone')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="form-group">
-                    <label for="status" class="form-label">Status</label>
-                    <select id="status" name="status" class="form-select" required>
-                        @foreach(App\Models\Order::getStatuses() as $status)
-                            <option value="{{ $status }}" {{ old('status', $order->status) === $status ? 'selected' : '' }}>
-                                {{ ucfirst($status) }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('status')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="total_amount" class="form-label">Total Amount</label>
-                    <input type="number" step="0.01" id="total_amount" name="total_amount" class="form-input" value="{{ old('total_amount', $order->total_amount) }}" required>
-                    @error('total_amount')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="notes" class="form-label">Notes</label>
-                    <textarea id="notes" name="notes" class="form-input" rows="4">{{ old('notes', $order->notes) }}</textarea>
-                    @error('notes')
+                    <label for="address" class="form-label">Address</label>
+                    <input type="text" id="address" name="address" class="form-input" value="{{ old('address', $customer->address) }}">
+                    @error('address')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <div class="button-group">
-                    <button type="submit" class="button button-primary">Update Order</button>
-                    <a href="{{ route('private.orders.index') }}" class="button button-secondary">Cancel</a>
+                    <button type="submit" class="button button-primary">Update Customer</button>
+                    <a href="{{ route('private.customers.index') }}" class="button button-secondary">Cancel</a>
                 </div>
             </form>
         </div>
     </div>
 </body>
-</html>
+</html> 

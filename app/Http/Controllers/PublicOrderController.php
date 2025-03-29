@@ -11,24 +11,19 @@ class PublicOrderController extends Controller
 {
     public function search(Request $request)
     {
-        $customerNumber = $request->input('customer_number');
-        $invoiceNumber = $request->input('invoice_number');
+        $orderNumber = $request->input('order_number');
+        $order = null;
+        $orderProducts = null;
 
-        // Buscar la orden
-        $order = Order::where('customer_number', $customerNumber)
-                      ->where('invoice_number', $invoiceNumber)
-                      ->first();
-
-        if (!$order) {
-            return back()->with('error', 'No se encontró ninguna orden con esos datos.');
+        if ($orderNumber) {
+            $order = Order::where('order_number', $orderNumber)->first();
+            
+            if ($order) {
+                $orderProducts = $order->products()->withPivot('quantity', 'price')->get();
+            }
         }
 
-        // Obtener los detalles del pedido
-        $orderDetails = OrderDetail::where('order_id', $order->id)
-                                   ->with('product') // Relación con productos
-                                   ->get();
-
-        return view('public.orders.search', compact('order', 'orderDetails'));
+        return view('public.orders.search', compact('order', 'orderProducts'));
     }
 }
 

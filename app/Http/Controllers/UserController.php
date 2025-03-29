@@ -1,57 +1,55 @@
 <?php
 
-// app/Http/Controllers/UserController.php
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Private;
 
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    // Mostrar todos los usuarios
     public function index()
     {
-        $users = User::with('role')->get();  // Obtener usuarios con su rol
-        return view('users.index', compact('users'));
+        $users = User::all(); // List all users
+        return view('private.users.index', compact('users'));
     }
 
-    // Mostrar el formulario para crear un nuevo usuario
     public function create()
     {
-        $roles = Role::all();  // Obtener todos los roles
-        return view('users.create', compact('roles'));
+        return view('private.users.create'); // Form to create a new user
     }
 
-    // Almacenar un nuevo usuario
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'required',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed',
-            'role_id' => 'required|exists:roles,id',
+            'password' => 'required|min:6',
+            'role' => 'required|in:sales,purchasing,warehouse,route',
         ]);
 
-        User::create([
+        // Buscar o crear el rol correspondiente
+        $role = Role::firstOrCreate(['name' => $request->role]);
+
+        // Preparar los datos del usuario
+        $userData = [
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
-            'role_id' => $request->role_id,
-            'email_verified_at' => now(),  // Se puede ajustar según la necesidad
-        ]);
+            'role_id' => $role->id
+        ];
+        
+        $user = User::create($userData);
 
-        return redirect()->route('users.index')->with('success', 'Usuario creado con éxito.');
+        return redirect()->route('private.users.index');
     }
 
-    // Mostrar el formulario para editar un usuario
     public function edit(User $user)
     {
-        $roles = Role::all();  // Obtener todos los roles
-        return view('users.edit', compact('user', 'roles'));
+        return view('private.users.edit', compact('user')); // Form to edit user details
     }
 
-    // Actualizar un usuario
     public function update(Request $request, User $user)
     {
         $request->validate([
@@ -71,11 +69,16 @@ class UserController extends Controller
         return redirect()->route('users.index')->with('success', 'Usuario actualizado con éxito.');
     }
 
-    // Eliminar un usuario
     public function destroy(User $user)
     {
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'Usuario eliminado con éxito.');
+
+        return redirect()->route('private.users.index');
+    }
+
+    // New profile method to show user details
+    public function profile(User $user)
+    {
+        return view('private.users.profile', compact('user')); // Display user profile
     }
 }
-

@@ -98,44 +98,6 @@
             border-radius: 20px;
             padding: 2rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-        }
-
-        .profile-header {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .profile-avatar {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background-color: var(--accent-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: 600;
-            margin-right: 2rem;
-        }
-
-        .profile-info {
-            flex: 1;
-        }
-
-        .profile-name {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .profile-role {
-            color: var(--secondary-color);
-            font-size: 1.1rem;
         }
 
         .profile-section {
@@ -147,7 +109,7 @@
         }
 
         .section-title {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 1rem;
             color: var(--primary-color);
@@ -155,7 +117,7 @@
 
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 1.5rem;
         }
 
@@ -165,33 +127,48 @@
         }
 
         .info-label {
-            font-size: 0.9rem;
+            font-size: 0.875rem;
             color: var(--secondary-color);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
         .info-value {
-            font-size: 1.1rem;
-            font-weight: 500;
+            font-size: 1rem;
             color: var(--primary-color);
-        }
-
-        .role-badge {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
             font-weight: 500;
         }
 
-        .role-admin {
-            background-color: #e8f5e9;
-            color: #2e7d32;
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
         }
 
-        .role-user {
-            background-color: #e3f2fd;
-            color: #1976d2;
+        .button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .button-primary {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .button-secondary {
+            background-color: #f8f9fa;
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .back-button {
@@ -243,14 +220,8 @@
                 padding: 1.5rem;
             }
 
-            .profile-header {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .profile-avatar {
-                margin-right: 0;
-                margin-bottom: 1rem;
+            .info-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -260,7 +231,9 @@
         <a href="{{ route('private.dashboard') }}" class="nav-logo">Halcon</a>
         <div class="nav-links">
             <a href="{{ route('private.orders.index') }}" class="nav-link">Orders</a>
+            <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
             <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
+            <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
         </div>
     </nav>
 
@@ -270,51 +243,36 @@
                 ← Back to Users
             </a>
             <h1 class="page-title">User Profile</h1>
-            <p class="page-subtitle">View detailed information about this user</p>
+            <p class="page-subtitle">View user details and information</p>
         </div>
 
         <div class="profile-card">
-            <div class="profile-header">
-                <div class="profile-avatar">
-                    {{ strtoupper(substr($user->name, 0, 1)) }}
-                </div>
-                <div class="profile-info">
-                    <h2 class="profile-name">{{ $user->name }}</h2>
-                    <span class="profile-role">{{ $user->role->name }}</span>
-                </div>
-            </div>
-
             <div class="profile-section">
-                <h2 class="section-title">Account Information</h2>
+                <h2 class="section-title">Basic Information</h2>
                 <div class="info-grid">
                     <div class="info-item">
-                        <span class="info-label">Email Address</span>
+                        <span class="info-label">Name</span>
+                        <span class="info-value">{{ $user->name }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Email</span>
                         <span class="info-value">{{ $user->email }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Role</span>
-                        <span class="role-badge role-{{ strtolower($user->role->name) }}">
-                            {{ $user->role->name }}
-                        </span>
+                        <span class="info-value">{{ $user->role->name }}</span>
                     </div>
                     <div class="info-item">
-                        <span class="info-label">Member Since</span>
+                        <span class="info-label">Created At</span>
                         <span class="info-value">{{ $user->created_at->format('M d, Y') }}</span>
                     </div>
                 </div>
             </div>
 
-            @if($user->email_verified_at)
-            <div class="profile-section">
-                <h2 class="section-title">Account Status</h2>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">Email Verification</span>
-                        <span class="info-value">Verified on {{ $user->email_verified_at->format('M d, Y') }}</span>
-                    </div>
-                </div>
+            <div class="button-group">
+                <a href="{{ route('private.users.edit', $user) }}" class="button button-primary">Edit Profile</a>
+                <a href="{{ route('private.users.index') }}" class="button button-secondary">Back to Users</a>
             </div>
-            @endif
         </div>
     </div>
 </body>

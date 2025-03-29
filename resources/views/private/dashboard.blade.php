@@ -96,7 +96,7 @@
 
         .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(2, 1fr);
             gap: 2rem;
             margin-bottom: 3rem;
         }
@@ -180,9 +180,7 @@
         }
 
         .back-button::before {
-            content: "←";
-            margin-right: 0.5rem;
-            font-size: 1.1rem;
+            display: none;
         }
 
         @media (max-width: 768px) {
@@ -214,7 +212,9 @@
         <a href="{{ route('private.dashboard') }}" class="nav-logo">Halcon</a>
         <div class="nav-links">
             <a href="{{ route('private.orders.index') }}" class="nav-link">Orders</a>
+            <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
             <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
+            <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
         </div>
     </nav>
 
@@ -229,7 +229,7 @@
 
         <div class="welcome-section">
             <h2 class="welcome-title">Welcome to Halcon Admin Dashboard</h2>
-            <p class="welcome-text">Manage your orders, users, and system settings from this central hub. Select an option below to get started.</p>
+            <p class="welcome-text">Manage your orders, users, products, and customers from this central hub. Select an option below to get started.</p>
         </div>
 
         <div class="dashboard-grid">
@@ -239,10 +239,22 @@
                 <p class="card-description">View and manage all orders in the system</p>
             </a>
 
+            <a href="{{ route('private.products.index') }}" class="dashboard-card">
+                <div class="card-icon">🛍️</div>
+                <h3 class="card-title">Products</h3>
+                <p class="card-description">Manage your product inventory</p>
+            </a>
+
             <a href="{{ route('private.users.index') }}" class="dashboard-card">
                 <div class="card-icon">👥</div>
                 <h3 class="card-title">Users</h3>
                 <p class="card-description">Manage user accounts and permissions</p>
+            </a>
+
+            <a href="{{ route('private.customers.index') }}" class="dashboard-card">
+                <div class="card-icon">👤</div>
+                <h3 class="card-title">Customers</h3>
+                <p class="card-description">View and manage customer information</p>
             </a>
         </div>
     </div>

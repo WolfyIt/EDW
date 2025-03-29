@@ -1,11 +1,9 @@
-<!-- resources/views/private/orders/edit.blade.php -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Order - Halcon</title>
+    <title>Product Details - Halcon</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
     <style>
         :root {
@@ -94,43 +92,46 @@
             font-size: 1.1rem;
         }
 
-        .form-card {
+        .profile-card {
             background: white;
             border-radius: 20px;
             padding: 2rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
-        .form-group {
-            margin-bottom: 1.5rem;
+        .profile-section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 500;
+        .profile-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
             color: var(--primary-color);
         }
 
-        .form-input, .form-select {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
+        .info-group {
+            margin-bottom: 1rem;
         }
 
-        .form-input:focus, .form-select:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-        }
-
-        .error-message {
-            color: var(--error-color);
+        .info-label {
             font-size: 0.875rem;
-            margin-top: 0.25rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .info-value {
+            font-size: 1rem;
+            color: var(--primary-color);
+            font-weight: 500;
         }
 
         .button-group {
@@ -200,10 +201,10 @@
             font-size: 0.9rem;
         }
 
-        .alert-danger {
-            background-color: #ffebee;
-            color: var(--error-color);
-            border: 1px solid #ffcdd2;
+        .alert-success {
+            background-color: #e8f5e9;
+            color: var(--success-color);
+            border: 1px solid #c8e6c9;
         }
 
         @media (max-width: 768px) {
@@ -224,7 +225,7 @@
                 display: none;
             }
 
-            .form-card {
+            .profile-card {
                 padding: 1.5rem;
             }
         }
@@ -243,88 +244,49 @@
 
     <div class="container">
         <div class="page-header">
-            <a href="{{ route('private.orders.index') }}" class="back-button">
-                Back to Orders
+            <a href="{{ route('private.products.index') }}" class="back-button">
+                ← Back to Products
             </a>
-            <h1 class="page-title">Edit Order</h1>
-            <p class="page-subtitle">Update order information</p>
+            <h1 class="page-title">Product Details</h1>
+            <p class="page-subtitle">View and manage product information</p>
         </div>
 
-        @if($errors->any())
-            <div class="alert alert-danger">
-                <ul>
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+        @if(session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
             </div>
         @endif
 
-        <div class="form-card">
-            <form action="{{ route('private.orders.update', $order) }}" method="POST">
-                @csrf
-                @method('PUT')
-                
-                <div class="form-group">
-                    <label for="order_number" class="form-label">Order Number</label>
-                    <input type="text" id="order_number" name="order_number" class="form-input" value="{{ old('order_number', $order->order_number) }}" required>
-                    @error('order_number')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
+        <div class="profile-card">
+            <div class="profile-section">
+                <h2 class="section-title">Basic Information</h2>
+                <div class="info-group">
+                    <div class="info-label">Name</div>
+                    <div class="info-value">{{ $product->name }}</div>
                 </div>
+                <div class="info-group">
+                    <div class="info-label">Description</div>
+                    <div class="info-value">{{ $product->description }}</div>
+                </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="customer_number" class="form-label">Customer Number</label>
-                    <input type="text" id="customer_number" name="customer_number" class="form-input" value="{{ old('customer_number', $order->customer->name) }}" required>
-                    @error('customer_number')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
+            <div class="profile-section">
+                <h2 class="section-title">Pricing & Stock</h2>
+                <div class="info-group">
+                    <div class="info-label">Price</div>
+                    <div class="info-value">${{ number_format($product->price, 2) }}</div>
                 </div>
+                <div class="info-group">
+                    <div class="info-label">Stock</div>
+                    <div class="info-value">{{ $product->stock }} units</div>
+                </div>
+            </div>
 
-                <div class="form-group">
-                    <label for="invoice_number" class="form-label">Invoice Number</label>
-                    <input type="text" id="invoice_number" name="invoice_number" class="form-input" value="{{ old('invoice_number', $order->invoice_number) }}" required>
-                    @error('invoice_number')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="status" class="form-label">Status</label>
-                    <select id="status" name="status" class="form-select" required>
-                        @foreach(App\Models\Order::getStatuses() as $status)
-                            <option value="{{ $status }}" {{ old('status', $order->status) === $status ? 'selected' : '' }}>
-                                {{ ucfirst($status) }}
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('status')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="total_amount" class="form-label">Total Amount</label>
-                    <input type="number" step="0.01" id="total_amount" name="total_amount" class="form-input" value="{{ old('total_amount', $order->total_amount) }}" required>
-                    @error('total_amount')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
-                    <label for="notes" class="form-label">Notes</label>
-                    <textarea id="notes" name="notes" class="form-input" rows="4">{{ old('notes', $order->notes) }}</textarea>
-                    @error('notes')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="button-group">
-                    <button type="submit" class="button button-primary">Update Order</button>
-                    <a href="{{ route('private.orders.index') }}" class="button button-secondary">Cancel</a>
-                </div>
-            </form>
+            <div class="button-group">
+                <a href="{{ route('private.products.edit', $product->id) }}" class="button button-primary">Edit Product</a>
+                <a href="{{ route('private.products.index') }}" class="button button-secondary">Back to Products</a>
+            </div>
         </div>
     </div>
 </body>
-</html>
+</html> 

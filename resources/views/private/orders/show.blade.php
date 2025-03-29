@@ -231,7 +231,7 @@
     <div class="container">
         <div class="page-header">
             <a href="{{ route('private.orders.index') }}" class="back-button">
-                ← Back to Orders
+                Back to Orders
             </a>
             <h1 class="page-title">Order Details</h1>
             <p class="page-subtitle">View detailed information about this order</p>

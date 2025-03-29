@@ -5,13 +5,14 @@ namespace App\Http\Controllers\Private;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Models\Customer;
 
 class OrderController extends Controller
 {
     // Display all orders
     public function index()
     {
-        $orders = Order::all(); // You can add pagination or filters
+        $orders = Order::with('customer')->get();
         return view('private.orders.index', compact('orders'));
     }
 
@@ -25,55 +26,63 @@ class OrderController extends Controller
     // Show the form to create a new order
     public function create()
     {
-        return view('private.orders.create');
+        $customers = Customer::all();
+        return view('private.orders.create', compact('customers'));
     }
 
     // Store a new order
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'customer_number' => 'required|numeric',
-            'invoice_number' => 'required|numeric|unique:orders',
-            'order_date' => 'required|date',
-            // Add any other fields you need
+            'order_number' => 'required|unique:orders',
+            'customer_id' => 'required|exists:customers,id',
+            'invoice_number' => 'required|unique:orders',
+            'status' => 'required|in:' . implode(',', Order::getStatuses()),
+            'total_amount' => 'required|numeric|min:0',
+            'notes' => 'nullable',
         ]);
 
-        $order = Order::create($validated);
+        // Obtener el cliente y usar su nombre como customer_number
+        $customer = Customer::findOrFail($validated['customer_id']);
+        $validated['customer_number'] = $customer->name;
 
-        return redirect()->route('private.orders.index')->with('success', 'Order created successfully.');
+        Order::create($validated);
+
+        return redirect()->route('private.orders.index')
+            ->with('success', 'Orden creada exitosamente.');
     }
 
     // Show the form to edit an order
-    public function edit($id)
+    public function edit(Order $order)
     {
-        $order = Order::findOrFail($id);
         return view('private.orders.edit', compact('order'));
     }
 
     // Update an existing order
-    public function update(Request $request, $id)
+    public function update(Request $request, Order $order)
     {
-        $order = Order::findOrFail($id);
-
         $validated = $request->validate([
-            'customer_number' => 'required|numeric',
-            'invoice_number' => 'required|numeric|unique:orders,invoice_number,' . $id,
-            'order_date' => 'required|date',
-            // Add any other fields you need
+            'order_number' => 'required|unique:orders,order_number,' . $order->id,
+            'customer_number' => 'required',
+            'invoice_number' => 'required|unique:orders,invoice_number,' . $order->id,
+            'status' => 'required|in:' . implode(',', Order::getStatuses()),
+            'total_amount' => 'required|numeric|min:0',
+            'notes' => 'nullable',
         ]);
 
         $order->update($validated);
 
-        return redirect()->route('private.orders.index')->with('success', 'Order updated successfully.');
+        return redirect()->route('private.orders.index')
+            ->with('success', 'Orden actualizada exitosamente.');
     }
 
     // Delete an order
-    public function destroy($id)
+    public function destroy(Order $order)
     {
-        $order = Order::findOrFail($id);
         $order->delete();
 
-        return redirect()->route('private.orders.index')->with('success', 'Order deleted successfully.');
+        return redirect()->route('private.orders.index')
+            ->with('success', 'Orden eliminada exitosamente.');
     }
 }
 
