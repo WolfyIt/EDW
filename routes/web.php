@@ -10,6 +10,9 @@ use App\Http\Controllers\Private\ProductController;
 use App\Http\Controllers\Private\CustomerController;
 use App\Http\Controllers\Private\DashboardController;
 
+// Include authentication routes
+require __DIR__.'/auth.php';
+
 // Public routes
 Route::get('/home', function () {
     return view('public.home');
