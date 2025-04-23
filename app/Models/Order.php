@@ -19,6 +19,9 @@ class Order extends Model
         'status',
         'total_amount',
         'notes',
+        'archived',              // added archived flag
+        'photo_route',           // added evidence en ruta
+        'photo_delivered',       // added evidence al entregar
     ];
 
     protected $casts = [

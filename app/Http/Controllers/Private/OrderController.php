@@ -9,10 +9,23 @@ use App\Models\Customer;
 
 class OrderController extends Controller
 {
-    // Display all orders
-    public function index()
+    // Display active orders with filters by invoice, customer, date, status
+    public function index(Request $request)
     {
-        $orders = Order::with('customer')->get();
+        $query = Order::with('customer')->where('archived', false);
+        if ($request->filled('invoice')) {
+            $query->where('invoice_number', 'like', '%'.$request->invoice.'%');
+        }
+        if ($request->filled('customer')) {
+            $query->where('customer_number', 'like', '%'.$request->customer.'%');
+        }
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        $orders = $query->orderByDesc('created_at')->get();
         return view('private.orders.index', compact('orders'));
     }
 
@@ -61,28 +74,53 @@ class OrderController extends Controller
     // Update an existing order
     public function update(Request $request, Order $order)
     {
-        $validated = $request->validate([
-            'order_number' => 'required|unique:orders,order_number,' . $order->id,
-            'customer_number' => 'required',
+        $rules = [
+            'order_number'   => 'required|unique:orders,order_number,' . $order->id,
+            'customer_number'=> 'required|string',
             'invoice_number' => 'required|unique:orders,invoice_number,' . $order->id,
-            'status' => 'required|in:' . implode(',', Order::getStatuses()),
-            'total_amount' => 'required|numeric|min:0',
-            'notes' => 'nullable',
-        ]);
+            'status'         => 'required|in:' . implode(',', Order::getStatuses()),
+            'total_amount'   => 'required|numeric|min:0',
+            'notes'          => 'nullable|string',
+            'photo_route'    => 'nullable|image|max:2048',
+            'photo_delivered'=> 'nullable|image|max:2048',
+        ]; 
+        $data = $request->validate($rules);
 
-        $order->update($validated);
+        if ($request->hasFile('photo_route')) {
+            $data['photo_route'] = $request->file('photo_route')->store('orders', 'public');
+        }
+        if ($request->hasFile('photo_delivered')) {
+            $data['photo_delivered'] = $request->file('photo_delivered')->store('orders', 'public');
+        }
+
+        $order->update($data);
 
         return redirect()->route('private.orders.index')
-            ->with('success', 'Orden actualizada exitosamente.');
+            ->with('success', 'Order updated successfully.');
     }
 
-    // Delete an order
+    // Delete an order logically (archive)
     public function destroy(Order $order)
     {
-        $order->delete();
-
+        $order->update(['archived' => true]);
         return redirect()->route('private.orders.index')
-            ->with('success', 'Orden eliminada exitosamente.');
+            ->with('success', 'Order archived successfully.');
+    }
+
+    // Display archived orders
+    public function archived()
+    {
+        $orders = Order::with('customer')->where('archived', true)->orderByDesc('created_at')->get();
+        return view('private.orders.archived', compact('orders'));
+    }
+
+    // Restore an archived order
+    public function restore($id)
+    {
+        $order = Order::findOrFail($id);
+        $order->update(['archived' => false]);
+        return redirect()->route('private.orders.archived')
+            ->with('success', 'Order restored successfully.');
     }
 }
 

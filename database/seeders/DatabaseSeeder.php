@@ -8,6 +8,9 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Seed the default admin user
+        $this->call(AdminUserSeeder::class);
+
         $this->call([
             RolesSeeder::class,
             UsersSeeder::class,

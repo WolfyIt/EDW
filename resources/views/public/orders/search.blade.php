@@ -237,8 +237,24 @@
                 </div>
                 <div class="result-item">
                     <span class="result-label">Status</span>
-                    <span class="result-value">{{ $order->status }}</span>
+                    <span class="result-value">{{ ucfirst($order->status) }}</span>
                 </div>
+                @if($order->status === 'Delivered')
+                    <div class="result-item">
+                        <span class="result-label">Proof of Delivery</span>
+                        <img src="{{ asset('storage/'.$order->photo_delivered) }}" alt="Delivery Evidence" style="max-width:100%;border-radius:10px;" />
+                    </div>
+                @elseif($order->status === 'In route')
+                    <div class="result-item">
+                        <span class="result-label">Loading Evidence</span>
+                        <img src="{{ asset('storage/'.$order->photo_route) }}" alt="Loading Evidence" style="max-width:100%;border-radius:10px;" />
+                    </div>
+                @elseif($order->status === 'In process')
+                    <div class="result-item">
+                        <span class="result-label">In Process Since</span>
+                        <span class="result-value">{{ $order->updated_at->format('Y-m-d H:i') }}</span>
+                    </div>
+                @endif
                 <div class="result-item">
                     <span class="result-label">Delivery Address</span>
                     <span class="result-value">{{ $order->delivery_address }}</span>

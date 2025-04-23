@@ -44,6 +44,8 @@ Route::middleware(['auth'])->prefix('private')->name('private.')->group(function
     
     // Orders routes
     Route::resource('orders', OrderController::class);
+    Route::get('orders-archived', [OrderController::class, 'archived'])->name('orders.archived');
+    Route::post('orders/{order}/restore', [OrderController::class, 'restore'])->name('orders.restore');
     
     // Products routes
     Route::resource('products', ProductController::class);

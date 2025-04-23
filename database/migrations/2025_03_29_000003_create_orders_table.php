@@ -18,6 +18,9 @@ return new class extends Migration
             $table->string('status')->default('pending');
             $table->decimal('total_amount', 10, 2);
             $table->text('notes')->nullable();
+            $table->boolean('archived')->default(false);  // new archived flag
+            $table->string('photo_route')->nullable();    // evidence en ruta
+            $table->string('photo_delivered')->nullable(); // evidence al entregar
             $table->timestamps();
         });
     }
@@ -26,4 +29,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('orders');
     }
-}; 
+};
