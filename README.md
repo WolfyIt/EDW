@@ -1,71 +1,68 @@
-# EDW - Sistema de Gestión de Pedidos
+# Halcon - Construction Material Distributor
 
-## Requisitos
+This Laravel application automates internal processes for Halcon, allowing customers and staff to track and manage orders with photographic evidence and role-based access.
 
-- PHP 8.1 o superior
-- Composer
-- Node.js y npm
-- SQLite
+## Features
 
-## Instalación
+- Public Order Lookup:
+  - Search by customer number & invoice number from a public form.
+  - Display order status and details.
+  - Show "In Process" timestamp, "In Route" loading photo, and "Delivered" delivery photo.
 
-1. Clona el repositorio:
-```bash
-git clone <url-del-repositorio>
-cd EDW
-```
+- Admin Dashboard (protected by `auth`):
+  - Default seeders for department roles: Sales, Purchasing, Warehouse, Route.
+  - Default administrator user: `admin@halcon.test` / `secret123`.
+  - CRUD for users, products, customers, and orders.
+  - Role-based restrictions: upload evidence photos only visible to Route department.
+  - Logical delete (archive) of orders with separate view and restore action.
+  - Filtering of orders by invoice, customer, date, and status.
+  - Flash notifications for success and error messages.
 
-2. Instala las dependencias de PHP:
-```bash
-composer install
-```
+- Database Migrations & Seeders:
+  - Orders table with `archived`, `photo_route`, `photo_delivered` fields.
+  - Seeders for roles and admin user.
 
-3. Instala las dependencias de Node.js:
-```bash
-npm install
-```
+## Installation
 
-4. Configura el entorno:
-```bash
-cp .env.example .env
-php artisan key:generate
-```
+1. Clone repository and navigate to project root.
+2. Install PHP dependencies:
+   ```bash
+   composer install
+   ```
+3. Install Node dependencies & compile assets:
+   ```bash
+   npm install
+   npm run dev
+   ```
+4. Configure environment variables:
+   ```bash
+   copy .env.example .env
+   php artisan key:generate
+   ```
+5. Run database migrations & seeders:
+   ```bash
+   php artisan migrate:fresh --seed
+   ```
+6. Serve the application:
+   ```bash
+   php artisan serve
+   ```
 
-5. Configura la base de datos:
-- El proyecto está configurado para usar SQLite por defecto
-- Crea el archivo de base de datos:
-```bash
-touch database/database.sqlite
-```
+Open http://localhost:8000 in your browser.
 
-6. Ejecuta las migraciones y los seeders:
-```bash
-php artisan migrate --seed
-```
+## Default Credentials
 
-7. Compila los assets:
-```bash
-npm run build
-```
+- Email: `admin@halcon.test`
+- Password: `secret123`
 
-8. Inicia el servidor:
-```bash
-php artisan serve
-```
+## Tests & Validation
 
-9. Visita http://localhost:8000 en tu navegador
+After development, verify:
+- Public search reflects correct status and photos.
+- Login redirects to Admin Dashboard.
+- Order CRUD, archiving, and restoration work.
+- Role restrictions prevent unauthorized photo uploads.
 
-## Características
+---
 
-- Gestión de pedidos
-- Gestión de productos
-- Gestión de usuarios
-- Gestión de clientes
-- Panel de administración
-- Búsqueda de pedidos por número de cliente y factura
-
-## Notas importantes
-
-- La aplicación usa SQLite como base de datos por defecto para facilitar la instalación
-- Asegúrate de tener los permisos correctos en las carpetas storage/ y bootstrap/cache/
-- Para entornos de producción, configura las variables de entorno apropiadamente en el archivo .env
+*Generated on April 22, 2025.*
