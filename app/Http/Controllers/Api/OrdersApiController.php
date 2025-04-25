@@ -79,4 +79,38 @@ class OrdersApiController extends Controller
         $order->delete();
         return response()->json(null, 204);
     }
+
+    /**
+     * Search orders by various criteria
+     */
+    public function search(Request $request)
+    {
+        \Log::info('Search parameters:', $request->all());
+
+        try {
+            $query = Order::with(['customer', 'products']);
+    
+            if ($request->has('invoice_number')) {
+                $query->where('invoice_number', $request->invoice_number);
+            }
+    
+            if ($request->has('customer_name')) {
+                $query->whereHas('customer', function($q) use ($request) {
+                    $q->where('name', 'like', '%' . $request->customer_name . '%');
+                });
+            }
+    
+            $order = $query->first();
+    
+            if (!$order) {
+                return response()->json(['error' => 'Order not found'], 404);
+            }
+    
+            \Log::info('Found order:', ['id' => $order->id]);
+            return response()->json($order);
+        } catch (\Exception $e) {
+            \Log::error('Search error: ' . $e->getMessage());
+            return response()->json(['error' => 'Error searching order'], 500);
+        }
+    }
 }
