@@ -188,12 +188,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .back-button::before {
-            content: "←";
-            margin-right: 0.5rem;
-            font-size: 1.1rem;
-        }
-
         .alert {
             padding: 1rem;
             border-radius: 8px;
@@ -244,9 +238,7 @@
 
     <div class="container">
         <div class="page-header">
-            <a href="{{ route('private.products.index') }}" class="back-button">
-                ← Back to Products
-            </a>
+            <a href="{{ route('private.products.index') }}" class="back-button">← Back to Products</a>
             <h1 class="page-title">Product Details</h1>
             <p class="page-subtitle">View and manage product information</p>
         </div>
@@ -289,4 +281,4 @@
         </div>
     </div>
 </body>
-</html> 
+</html>

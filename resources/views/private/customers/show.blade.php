@@ -189,12 +189,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .back-button::before {
-            content: "←";
-            margin-right: 0.5rem;
-            font-size: 1.1rem;
-        }
-
         .alert {
             padding: 1rem;
             border-radius: 8px;
@@ -245,9 +239,7 @@
 
     <div class="container">
         <div class="page-header">
-            <a href="{{ route('private.customers.index') }}" class="back-button">
-                ← Back to Customers
-            </a>
+            <a href="{{ route('private.customers.index') }}" class="back-button">← Back to Customers</a>
             <h1 class="page-title">Customer Details</h1>
             <p class="page-subtitle">View and manage customer information</p>
         </div>
@@ -290,4 +282,4 @@
         </div>
     </div>
 </body>
-</html> 
+</html>

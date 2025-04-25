@@ -192,12 +192,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        .back-button::before {
-            content: "←";
-            margin-right: 0.5rem;
-            font-size: 1.1rem;
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding: 1rem;
@@ -239,9 +233,7 @@
 
     <div class="container">
         <div class="page-header">
-            <a href="{{ route('private.users.index') }}" class="back-button">
-                ← Back to Users
-            </a>
+            <a href="{{ route('private.users.index') }}" class="back-button">← Back to Users</a>
             <h1 class="page-title">User Profile</h1>
             <p class="page-subtitle">View user details and information</p>
         </div>

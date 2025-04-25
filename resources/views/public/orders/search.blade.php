@@ -119,6 +119,45 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
+        /* Status badge styles */
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-processing {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status-shipped {
+            background-color: #fff8e1;
+            color: #f57c00;
+        }
+
+        .status-delivered {
+            background-color: #e8eaf6;
+            color: #3f51b5;
+        }
+
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-cancelled {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
         .result-title {
             font-size: 1.5rem;
             font-weight: 600;
@@ -184,10 +223,35 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
-        .back-button::before {
-            content: "←";
-            margin-right: 0.5rem;
+        /* New styles for products in search result */
+        .result-subtitle {
             font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        .product-table th,
+        .product-table td {
+            padding: 0.5rem;
+            border-bottom: 1px solid #f5f5f7;
+        }
+
+        .product-table th {
+            text-align: left;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .product-table td {
+            text-align: right;
         }
 
         @media (max-width: 768px) {
@@ -209,12 +273,12 @@
     <div class="container">
         <div class="search-header">
             <h1 class="search-title">Order Search</h1>
-            <p class="search-subtitle">Enter your customer number and invoice number to track your order</p>
+            <p class="search-subtitle">Enter your customer name and invoice number to track your order</p>
         </div>
 
         <form action="{{ route('order.search') }}" method="GET" class="search-form">
             <div class="form-group">
-                <label for="customer_number" class="form-label">Customer Number</label>
+                <label for="customer_number" class="form-label">Customer Name</label>
                 <input type="text" name="customer_number" id="customer_number" class="form-input" required>
             </div>
             <div class="form-group">
@@ -228,16 +292,26 @@
             <div class="result-section">
                 <h2 class="result-title">Order Details</h2>
                 <div class="result-item">
-                    <span class="result-label">Invoice Number</span>
-                    <span class="result-value">{{ $order->invoice_number }}</span>
+                    <span class="result-label">Order Number</span>
+                    <span class="result-value">{{ $order->order_number }}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Order Date</span>
+                    <span class="result-value">{{ $order->created_at->format('M d, Y') }}</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label">Customer Name</span>
-                    <span class="result-value">{{ $order->customer_name }}</span>
+                    <span class="result-value">{{ $order->customer->name }}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Customer Number</span>
+                    <span class="result-value">{{ $order->customer->customer_number }}</span>
                 </div>
                 <div class="result-item">
                     <span class="result-label">Status</span>
-                    <span class="result-value">{{ ucfirst($order->status) }}</span>
+                    <span class="status-badge status-{{ strtolower($order->status) }}">
+                        {{ ucfirst($order->status) }}
+                    </span>
                 </div>
                 @if($order->status === 'Delivered')
                     <div class="result-item">
@@ -257,8 +331,42 @@
                 @endif
                 <div class="result-item">
                     <span class="result-label">Delivery Address</span>
-                    <span class="result-value">{{ $order->delivery_address }}</span>
+                    <span class="result-value">{{ $order->customer->address }}</span>
                 </div>
+                <hr style="border:none;height:1px;background-color:#f5f5f7;margin:2rem 0;" />
+                <h3 class="result-subtitle">Products</h3>
+                <table class="product-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th style="text-align:right;">Qty</th>
+                            <th style="text-align:right;">Unit Price</th>
+                            <th style="text-align:right;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($order->products as $product)
+                        <tr>
+                            <td style="text-align:left;">{{ $product->name }}</td>
+                            <td>{{ $product->pivot->quantity }}</td>
+                            <td>${{ number_format($product->pivot->price,2) }}</td>
+                            <td>${{ number_format($product->pivot->quantity * $product->pivot->price,2) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align:right;font-weight:600;">Total:</td>
+                            <td style="font-weight:600;">${{ number_format($order->total_amount,2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+                @if($order->notes)
+                <div class="result-item">
+                    <span class="result-label">Additional Notes</span>
+                    <span class="result-value">{{ $order->notes }}</span>
+                </div>
+                @endif
             </div>
         @elseif(session('error'))
             <div class="error-message">
@@ -266,7 +374,7 @@
             </div>
         @endif
 
-        <a href="{{ route('home') }}" class="back-button">Back to Home</a>
+        <a href="{{ route('home') }}" class="back-button">← Back to Home</a>
     </div>
 </body>
 </html>

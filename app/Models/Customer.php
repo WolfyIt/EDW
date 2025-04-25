@@ -14,10 +14,20 @@ class Customer extends Model
         'email',
         'phone',
         'address',
+        'customer_number',
     ];
+
+    protected static function booted()
+    {
+        static::created(function (Customer $customer) {
+            $customer->updateQuietly([
+                'customer_number' => 'CUST' . str_pad($customer->id, 6, '0', STR_PAD_LEFT),
+            ]);
+        });
+    }
 
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
-} 
+}

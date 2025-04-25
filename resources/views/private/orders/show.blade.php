@@ -119,13 +119,17 @@
 
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 2rem 3rem;
+            margin-bottom: 1rem;
         }
 
         .info-item {
             display: flex;
             flex-direction: column;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border-radius: 10px;
         }
 
         .info-label {
@@ -148,9 +152,9 @@
             font-weight: 500;
         }
 
-        .status-ordered {
-            background-color: #e8f5e9;
-            color: #2e7d32;
+        .status-pending {
+            background-color: #fff3e0;
+            color: #f57c00;
         }
 
         .status-processing {
@@ -159,13 +163,31 @@
         }
 
         .status-shipped {
-            background-color: #fff3e0;
+            background-color: #fff8e1;
             color: #f57c00;
         }
 
         .status-delivered {
             background-color: #e8eaf6;
             color: #3f51b5;
+        }
+
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-cancelled {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        /* Divider between sections */
+        .section-divider {
+            margin: 2rem 0;
+            border: none;
+            height: 2px;
+            background-color: var(--border-color);
         }
 
         .back-button {
@@ -187,12 +209,6 @@
             background-color: var(--hover-color);
             transform: translateY(-2px);
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .back-button::before {
-            content: "←";
-            margin-right: 0.5rem;
-            font-size: 1.1rem;
         }
 
         @media (max-width: 768px) {
@@ -224,19 +240,22 @@
         <a href="{{ route('private.dashboard') }}" class="nav-logo">Halcon</a>
         <div class="nav-links">
             <a href="{{ route('private.orders.index') }}" class="nav-link">Orders</a>
+            <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
+            <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
             <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
         </div>
     </nav>
 
     <div class="container">
         <div class="page-header">
-            <a href="{{ route('private.orders.index') }}" class="back-button">
-                Back to Orders
-            </a>
+            <a href="{{ route('private.orders.index') }}" class="back-button">← Back to Orders</a>
             <h1 class="page-title">Order Details</h1>
             <p class="page-subtitle">View detailed information about this order</p>
         </div>
-
+        <!-- Placeholder image for order -->
+        <div class="order-image-placeholder" style="margin:1.5rem 0; text-align:center;">
+            <img src="https://via.placeholder.com/800x200?text=Order+Image" alt="Order Placeholder" style="width:100%; max-width:800px; border-radius:10px;">
+        </div>
         <div class="order-card">
             <div class="order-section">
                 <h2 class="section-title">Order Information</h2>
@@ -246,30 +265,28 @@
                         <span class="info-value">{{ $order->invoice_number }}</span>
                     </div>
                     <div class="info-item">
+                        <span class="info-label">Order Number</span>
+                        <span class="info-value">{{ $order->order_number }}</span>
+                    </div>
+                    <div class="info-item">
                         <span class="info-label">Order Date</span>
-                        <span class="info-value">
-                            @if($order->order_date instanceof \Carbon\Carbon)
-                                {{ $order->order_date->format('M d, Y') }}
-                            @else
-                                {{ $order->order_date }}
-                            @endif
-                        </span>
+                        <span class="info-value">{{ $order->created_at->format('M d, Y') }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Status</span>
                         <span class="status-badge status-{{ strtolower($order->status) }}">
-                            {{ $order->status }}
+                            {{ ucfirst($order->status) }}
                         </span>
                     </div>
                 </div>
             </div>
-
+            <hr class="section-divider" />
             <div class="order-section">
                 <h2 class="section-title">Customer Information</h2>
                 <div class="info-grid">
                     <div class="info-item">
                         <span class="info-label">Customer Name</span>
-                        <span class="info-value">{{ $order->customer_name }}</span>
+                        <span class="info-value">{{ $order->customer->name }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Customer Number</span>
@@ -277,11 +294,45 @@
                     </div>
                     <div class="info-item">
                         <span class="info-label">Delivery Address</span>
-                        <span class="info-value">{{ $order->delivery_address }}</span>
+                        <span class="info-value">{{ $order->customer->address }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Assigned To</span>
+                        <span class="info-value">{{ optional($order->user)->name ?? 'N/A' }}</span>
                     </div>
                 </div>
             </div>
-
+            <hr class="section-divider" />
+            <div class="order-section">
+                <h2 class="section-title">Products</h2>
+                <table class="product-table" style="width:100%;border-collapse:collapse;">
+                    <thead>
+                        <tr>
+                            <th style="border-bottom:1px solid var(--border-color);text-align:left;padding:0.5rem;">Name</th>
+                            <th style="border-bottom:1px solid var(--border-color);text-align:right;padding:0.5rem;">Qty</th>
+                            <th style="border-bottom:1px solid var(--border-color);text-align:right;padding:0.5rem;">Unit Price</th>
+                            <th style="border-bottom:1px solid var(--border-color);text-align:right;padding:0.5rem;">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($order->products as $product)
+                        <tr>
+                            <td style="padding:0.5rem 0;">{{ $product->name }}</td>
+                            <td style="padding:0.5rem 0;text-align:right;">{{ $product->pivot->quantity }}</td>
+                            <td style="padding:0.5rem 0;text-align:right;">${{ number_format($product->pivot->price,2) }}</td>
+                            <td style="padding:0.5rem 0;text-align:right;">${{ number_format($product->pivot->quantity * $product->pivot->price,2) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="text-align:right;padding:0.5rem;font-weight:600;">Total:</td>
+                            <td style="padding:0.5rem;text-align:right;font-weight:600;">${{ number_format($order->total_amount,2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <hr class="section-divider" />
             @if($order->notes)
             <div class="order-section">
                 <h2 class="section-title">Additional Notes</h2>
