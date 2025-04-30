@@ -6,6 +6,8 @@ use App\Models\Order;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Product; // Import Product model
+use Illuminate\Support\Facades\DB; // Import DB facade for transactions
 
 class OrderController extends Controller
 {
@@ -40,29 +42,93 @@ class OrderController extends Controller
     public function create()
     {
         $customers = Customer::all();
-        return view('private.orders.create', compact('customers'));
+        $products = Product::where('stock', '>', 0)->get(); // Get available products
+        return view('private.orders.create', compact('customers', 'products')); // Pass products to view
     }
 
     // Store a new order
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'order_number' => 'required|unique:orders',
             'customer_id' => 'required|exists:customers,id',
-            'invoice_number' => 'required|unique:orders',
             'status' => 'required|in:' . implode(',', Order::getStatuses()),
-            'total_amount' => 'required|numeric|min:0',
-            'notes' => 'nullable',
+            'notes' => 'nullable|string',
+            'products' => 'required|array|min:1', // Ensure at least one product is selected
+            'products.*.id' => 'required|exists:products,id',
+            'products.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // Obtener el cliente y usar su nombre como customer_number
-        $customer = Customer::findOrFail($validated['customer_id']);
-        $validated['customer_number'] = $customer->name;
+        // Use a database transaction to ensure atomicity
+        DB::beginTransaction();
+        try {
+            // Generate unique numbers
+            $order_number = 'ORD-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT);
+            while (Order::where('order_number', $order_number)->exists()) {
+                $order_number = 'ORD-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT);
+            }
 
-        Order::create($validated);
+            $invoice_number = 'INV-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT);
+            while (Order::where('invoice_number', $invoice_number)->exists()) {
+                $invoice_number = 'INV-' . str_pad(rand(10000, 99999), 5, '0', STR_PAD_LEFT);
+            }
 
-        return redirect()->route('private.orders.index')
-            ->with('success', 'Orden creada exitosamente.');
+            // Get customer details
+            $customer = Customer::findOrFail($validated['customer_id']);
+
+            // Calculate total amount and prepare products for pivot table
+            $total_amount = 0;
+            $products_to_attach = [];
+            foreach ($validated['products'] as $product_data) {
+                $product = Product::find($product_data['id']);
+                if (!$product || $product->stock < $product_data['quantity']) {
+                    // Rollback and redirect with error if stock is insufficient
+                    DB::rollBack();
+                    return redirect()->back()
+                        ->withInput()
+                        ->withErrors(['products' => 'Insufficient stock for product: ' . ($product->name ?? 'ID ' . $product_data['id'])]);
+                }
+                $price = $product->price;
+                $quantity = $product_data['quantity'];
+                $subtotal = $price * $quantity;
+                $total_amount += $subtotal;
+
+                $products_to_attach[$product->id] = [
+                    'quantity' => $quantity,
+                    'price' => $price, // Store price at the time of order
+                ];
+
+                // Decrement stock (optional, consider race conditions if high traffic)
+                // $product->decrement('stock', $quantity);
+            }
+
+            // Create the order
+            $order = Order::create([
+                'order_number' => $order_number,
+                'customer_number' => $customer->customer_number, // Use customer number from customer model
+                'invoice_number' => $invoice_number,
+                'customer_id' => $validated['customer_id'],
+                'status' => $validated['status'],
+                'total_amount' => $total_amount, // Calculated total
+                'notes' => $validated['notes'],
+            ]);
+
+            // Attach products to the order
+            $order->products()->attach($products_to_attach);
+
+            // Commit the transaction
+            DB::commit();
+
+            return redirect()->route('private.orders.index')
+                ->with('success', 'Order created successfully with number ' . $order_number);
+
+        } catch (\Exception $e) {
+            // Rollback on error
+            DB::rollBack();
+            \Log::error("Error creating order: " . $e->getMessage()); // Log the error
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Failed to create order. Please try again. Error: ' . $e->getMessage());
+        }
     }
 
     // Show the form to edit an order

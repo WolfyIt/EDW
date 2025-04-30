@@ -13,6 +13,11 @@ use App\Http\Controllers\Private\DashboardController;
 // Include authentication routes
 require __DIR__.'/auth.php';
 
+// Redirect root to /home
+Route::get('/', function () {
+    return redirect()->route('home');
+});
+
 // Public routes
 Route::get('/home', function () {
     return view('public.home');

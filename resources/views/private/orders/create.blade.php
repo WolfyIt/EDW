@@ -228,6 +228,54 @@
                 padding: 1.5rem;
             }
         }
+
+        .product-selection-area {
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        .product-adder {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .product-adder .form-group {
+            margin-bottom: 0;
+            flex-grow: 1;
+        }
+
+        .added-products-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 1rem;
+        }
+
+        .added-product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            background-color: var(--hover-color);
+        }
+
+        .added-product-item span {
+            font-size: 0.9rem;
+        }
+
+        .remove-product-btn {
+            background: none;
+            border: none;
+            color: var(--error-color);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.25rem;
+        }
     </style>
 </head>
 <body>
@@ -261,16 +309,8 @@
         @endif
 
         <div class="form-card">
-            <form action="{{ route('private.orders.store') }}" method="POST">
+            <form action="{{ route('private.orders.store') }}" method="POST" id="create-order-form">
                 @csrf
-                
-                <div class="form-group">
-                    <label for="order_number" class="form-label">Order Number</label>
-                    <input type="text" id="order_number" name="order_number" class="form-input" value="{{ old('order_number') }}" required>
-                    @error('order_number')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
 
                 <div class="form-group">
                     <label for="customer_id" class="form-label">Customer</label>
@@ -278,7 +318,7 @@
                         <option value="">Select a customer</option>
                         @foreach($customers as $customer)
                             <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                                {{ $customer->name }}
+                                {{ $customer->name }} ({{ $customer->customer_number }})
                             </option>
                         @endforeach
                     </select>
@@ -288,18 +328,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="invoice_number" class="form-label">Invoice Number</label>
-                    <input type="text" id="invoice_number" name="invoice_number" class="form-input" value="{{ old('invoice_number') }}" required>
-                    @error('invoice_number')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
                     <label for="status" class="form-label">Status</label>
                     <select id="status" name="status" class="form-select" required>
                         @foreach(App\Models\Order::getStatuses() as $status)
-                            <option value="{{ $status }}" {{ old('status') === $status ? 'selected' : '' }}>
+                            <option value="{{ $status }}" {{ old('status') === $status ? 'selected' : ('pending' === $status ? 'selected' : '') }}>
                                 {{ ucfirst($status) }}
                             </option>
                         @endforeach
@@ -309,17 +341,35 @@
                     @enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="total_amount" class="form-label">Total Amount</label>
-                    <input type="number" step="0.01" id="total_amount" name="total_amount" class="form-input" value="{{ old('total_amount') }}" required>
-                    @error('total_amount')
+                <div class="product-selection-area">
+                    <h3 class="form-label">Products</h3>
+                    <div class="product-adder">
+                        <div class="form-group">
+                            <label for="product_select" class="form-label" style="font-size: 0.9em;">Select Product</label>
+                            <select id="product_select" class="form-select">
+                                <option value="">-- Choose Product --</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}" data-name="{{ $product->name }}" data-stock="{{ $product->stock }}">
+                                        {{ $product->name }} (Stock: {{ $product->stock }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="product_quantity" class="form-label" style="font-size: 0.9em;">Quantity</label>
+                            <input type="number" id="product_quantity" class="form-input" min="1" value="1">
+                        </div>
+                        <button type="button" id="add-product-btn" class="button button-secondary" style="padding: 0.6rem 1rem; align-self: flex-end;">Add</button>
+                    </div>
+                    @error('products')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
+                    <ul id="added-products-list" class="added-products-list"></ul>
                 </div>
 
                 <div class="form-group">
                     <label for="notes" class="form-label">Notes</label>
-                    <textarea id="notes" name="notes" class="form-input" rows="4">{{ old('notes') }}</textarea>
+                    <textarea id="notes" name="notes" class="form-input" rows="3">{{ old('notes') }}</textarea>
                     @error('notes')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
@@ -332,5 +382,90 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addProductBtn = document.getElementById('add-product-btn');
+            const productSelect = document.getElementById('product_select');
+            const quantityInput = document.getElementById('product_quantity');
+            const addedProductsList = document.getElementById('added-products-list');
+            const form = document.getElementById('create-order-form');
+            let productIndex = 0;
+            let addedProductIds = new Set();
+
+            addProductBtn.addEventListener('click', function() {
+                const selectedOption = productSelect.options[productSelect.selectedIndex];
+                const productId = selectedOption.value;
+                const productName = selectedOption.getAttribute('data-name');
+                const productStock = parseInt(selectedOption.getAttribute('data-stock'), 10);
+                const quantity = parseInt(quantityInput.value, 10);
+
+                if (!productId) {
+                    alert('Please select a product.');
+                    return;
+                }
+                if (isNaN(quantity) || quantity < 1) {
+                    alert('Please enter a valid quantity (minimum 1).');
+                    return;
+                }
+                if (quantity > productStock) {
+                    alert(`Quantity (${quantity}) exceeds available stock (${productStock}) for ${productName}.`);
+                    return;
+                }
+                if (addedProductIds.has(productId)) {
+                    alert(`${productName} has already been added. You can remove it and add it again with a different quantity if needed.`);
+                    return;
+                }
+
+                const listItem = document.createElement('li');
+                listItem.classList.add('added-product-item');
+                listItem.setAttribute('data-product-id', productId);
+                listItem.innerHTML = `
+                    <span>${productName} - Qty: ${quantity}</span>
+                    <button type="button" class="remove-product-btn" title="Remove">&times;</button>
+                `;
+                addedProductsList.appendChild(listItem);
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = `products[${productIndex}][id]`;
+                idInput.value = productId;
+                form.appendChild(idInput);
+
+                const quantityHiddenInput = document.createElement('input');
+                quantityHiddenInput.type = 'hidden';
+                quantityHiddenInput.name = `products[${productIndex}][quantity]`;
+                quantityHiddenInput.value = quantity;
+                form.appendChild(quantityHiddenInput);
+
+                listItem.dataset.inputId = idInput.name;
+                listItem.dataset.inputQuantity = quantityHiddenInput.name;
+
+                addedProductIds.add(productId);
+
+                productIndex++;
+
+                productSelect.selectedIndex = 0;
+                quantityInput.value = 1;
+            });
+
+            addedProductsList.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('remove-product-btn')) {
+                    const itemToRemove = e.target.closest('.added-product-item');
+                    const productIdToRemove = itemToRemove.getAttribute('data-product-id');
+                    
+                    const idInputToRemove = form.querySelector(`input[name="${itemToRemove.dataset.inputId}"]`);
+                    const quantityInputToRemove = form.querySelector(`input[name="${itemToRemove.dataset.inputQuantity}"]`);
+                    if (idInputToRemove) form.removeChild(idInputToRemove);
+                    if (quantityInputToRemove) form.removeChild(quantityInputToRemove);
+
+                    itemToRemove.remove();
+
+                    addedProductIds.delete(productIdToRemove);
+                }
+            });
+        });
+    </script>
+
 </body>
 </html>
