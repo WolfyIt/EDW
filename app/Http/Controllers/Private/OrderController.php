@@ -14,7 +14,7 @@ class OrderController extends Controller
     // Display active orders with filters by invoice, customer, date, status
     public function index(Request $request)
     {
-        $query = Order::with('customer')->where('archived', false);
+        $query = Order::with('customer', 'products')->where('archived', false);
         if ($request->filled('invoice')) {
             $query->where('invoice_number', 'like', '%'.$request->invoice.'%');
         }
@@ -28,13 +28,26 @@ class OrderController extends Controller
             $query->where('status', $request->status);
         }
         $orders = $query->orderByDesc('created_at')->get();
+        
+        // Ensure all totals are calculated correctly
+        foreach ($orders as $order) {
+            if ($order->total_amount != $order->calculateTotal()) {
+                $order->updateTotal();
+            }
+        }
+        
         return view('private.orders.index', compact('orders'));
     }
 
-    // Show a single order
     public function show($id)
     {
         $order = Order::findOrFail($id);  // Find order by ID or fail
+        
+        // Ensure the total is calculated correctly
+        if ($order->total_amount != $order->calculateTotal()) {
+            $order->updateTotal();
+        }
+        
         return view('private.orders.show', compact('order'));
     }
 
@@ -56,6 +69,7 @@ class OrderController extends Controller
             'products' => 'required|array|min:1', // Ensure at least one product is selected
             'products.*.id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
+            'image' => 'nullable|image|max:2048', // Allow image upload
         ]);
 
         // Use a database transaction to ensure atomicity
@@ -102,7 +116,7 @@ class OrderController extends Controller
             }
 
             // Create the order
-            $order = Order::create([
+            $orderData = [
                 'order_number' => $order_number,
                 'customer_number' => $customer->customer_number, // Use customer number from customer model
                 'invoice_number' => $invoice_number,
@@ -110,7 +124,14 @@ class OrderController extends Controller
                 'status' => $validated['status'],
                 'total_amount' => $total_amount, // Calculated total
                 'notes' => $validated['notes'],
-            ]);
+            ];
+
+            // Handle image upload if present
+            if ($request->hasFile('image')) {
+                $orderData['image_path'] = $request->file('image')->store('orders', 'public');
+            }
+
+            $order = Order::create($orderData);
 
             // Attach products to the order
             $order->products()->attach($products_to_attach);
@@ -134,7 +155,14 @@ class OrderController extends Controller
     // Show the form to edit an order
     public function edit(Order $order)
     {
-        return view('private.orders.edit', compact('order'));
+        // Ensure the total is calculated correctly before showing the edit form
+        if ($order->total_amount != $order->calculateTotal()) {
+            $order->updateTotal();
+        }
+        
+        $customers = Customer::all();
+        $products = Product::where('stock', '>', 0)->get(); // Get available products
+        return view('private.orders.edit', compact('order', 'customers', 'products'));
     }
 
     // Update an existing order
@@ -147,11 +175,15 @@ class OrderController extends Controller
             'status'         => 'required|in:' . implode(',', Order::getStatuses()),
             'total_amount'   => 'required|numeric|min:0',
             'notes'          => 'nullable|string',
+            'image'          => 'nullable|image|max:2048',
             'photo_route'    => 'nullable|image|max:2048',
             'photo_delivered'=> 'nullable|image|max:2048',
         ]; 
         $data = $request->validate($rules);
 
+        if ($request->hasFile('image')) {
+            $data['image_path'] = $request->file('image')->store('orders', 'public');
+        }
         if ($request->hasFile('photo_route')) {
             $data['photo_route'] = $request->file('photo_route')->store('orders', 'public');
         }
@@ -159,7 +191,46 @@ class OrderController extends Controller
             $data['photo_delivered'] = $request->file('photo_delivered')->store('orders', 'public');
         }
 
+        // Update the order
         $order->update($data);
+        
+        // Recalculate the total amount
+        if (isset($request->products) && is_array($request->products)) {
+            // If the products were updated, update the pivot table and recalculate
+            DB::beginTransaction();
+            try {
+                // First detach all existing products
+                $order->products()->detach();
+                
+                // Then attach the new products
+                $products_to_attach = [];
+                foreach ($request->products as $product_data) {
+                    $product = Product::find($product_data['id']);
+                    if ($product) {
+                        $products_to_attach[$product->id] = [
+                            'quantity' => $product_data['quantity'],
+                            'price' => $product->price,
+                        ];
+                    }
+                }
+                
+                // Attach products to the order
+                $order->products()->attach($products_to_attach);
+                
+                // Update the total
+                $order->updateTotal();
+                
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error', 'Failed to update order products. Error: ' . $e->getMessage());
+            }
+        } else {
+            // If no products were updated, just make sure the total is correct
+            $order->updateTotal();
+        }
 
         return redirect()->route('private.orders.index')
             ->with('success', 'Order updated successfully.');

@@ -190,11 +190,20 @@
 </head>
 <body>
     <nav class="nav">
-        <a href="/" class="nav-logo">Halcon</a>
+        <a href="{{ route('home') }}" class="nav-logo">Halcon</a>
         <div class="nav-links">
             <a href="{{ route('order.search.form') }}" class="nav-link">Search Orders</a>
             @auth
                 <a href="{{ route('private.dashboard') }}" class="nav-link">Dashboard</a>
+                <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                    @csrf
+                    <a href="{{ route('logout') }}"
+                       onclick="event.preventDefault();
+                                this.closest('form').submit();"
+                       class="nav-link">
+                        Logout
+                    </a>
+                </form>
             @endauth
         </div>
     </nav>
@@ -226,9 +235,11 @@
     </section>
 
     <div class="login-button-container">
+        @guest
         <a href="{{ route('login') }}" class="login-button">
-            Iniciar Sesión
+            Log In
         </a>
+        @endguest
     </div>
 </body>
 </html>

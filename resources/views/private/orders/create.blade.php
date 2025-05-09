@@ -56,18 +56,54 @@
 
         .nav-links {
             display: flex;
-            gap: 2rem;
+            gap: 1.5rem;
+            align-items: center;
         }
 
         .nav-link {
             text-decoration: none;
             color: var(--secondary-color);
             font-size: 0.9rem;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            background-color: transparent;
         }
 
         .nav-link:hover {
             color: var(--primary-color);
+            background-color: var(--hover-color);
+            transform: translateY(-2px);
+        }
+        
+        .nav-link-active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .logout-link {
+            color: var(--accent-color);
+            background-color: rgba(0, 102, 204, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .logout-link:hover {
+            background-color: rgba(0, 102, 204, 0.2);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            margin-left: 1rem;
         }
 
         .container {
@@ -276,16 +312,66 @@
             font-size: 1.1rem;
             padding: 0.25rem;
         }
+
+        .order-summary {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .order-summary h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .summary-total {
+            font-weight: bold;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .image-upload {
+            margin-top: 1.5rem;
+        }
     </style>
 </head>
 <body>
     <nav class="nav">
         <a href="{{ route('private.dashboard') }}" class="nav-logo">Halcon</a>
         <div class="nav-links">
-            <a href="{{ route('private.orders.index') }}" class="nav-link">Orders</a>
-            <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
-            <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
-            <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
+            @if(Auth::user()->role && in_array(strtolower(Auth::user()->role->name), ['admin', 'warehouse', 'sales', 'purchasing', 'route']))
+                <a href="{{ route('private.orders.index') }}" class="nav-link nav-link-active">Orders</a>
+            @endif
+            @if(Auth::user()->role && in_array(strtolower(Auth::user()->role->name), ['admin', 'warehouse', 'purchasing']))
+                <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
+            @endif
+            @if(Auth::user()->role && strtolower(Auth::user()->role->name) === 'admin')
+                <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
+                <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
+            @endif
+            {{-- Logout Link --}}
+            <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                @csrf
+                <a href="{{ route('logout') }}"
+                   onclick="event.preventDefault();
+                            this.closest('form').submit();"
+                   class="nav-link logout-link">
+                    Logout
+                </a>
+            </form>
+            <div class="user-avatar" style="background-color: {{ '#' . substr(md5(Auth::user()->name), 0, 6) }}">
+                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+            </div>
         </div>
     </nav>
 
@@ -309,7 +395,7 @@
         @endif
 
         <div class="form-card">
-            <form action="{{ route('private.orders.store') }}" method="POST" id="create-order-form">
+            <form action="{{ route('private.orders.store') }}" method="POST" id="create-order-form" enctype="multipart/form-data">
                 @csrf
 
                 <div class="form-group">
@@ -349,7 +435,7 @@
                             <select id="product_select" class="form-select">
                                 <option value="">-- Choose Product --</option>
                                 @foreach($products as $product)
-                                    <option value="{{ $product->id }}" data-name="{{ $product->name }}" data-stock="{{ $product->stock }}">
+                                    <option value="{{ $product->id }}" data-name="{{ $product->name }}" data-price="{{ $product->price }}" data-stock="{{ $product->stock }}">
                                         {{ $product->name }} (Stock: {{ $product->stock }})
                                     </option>
                                 @endforeach
@@ -365,6 +451,23 @@
                         <p class="error-message">{{ $message }}</p>
                     @enderror
                     <ul id="added-products-list" class="added-products-list"></ul>
+                </div>
+
+                <div id="order-summary" class="order-summary" style="display: none;">
+                    <h3>Order Summary</h3>
+                    <div id="summary-items"></div>
+                    <div class="summary-item summary-total">
+                        <span>Total</span>
+                        <span id="summary-total-amount">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="form-group image-upload">
+                    <label for="image" class="form-label">Upload Order Image</label>
+                    <input type="file" id="image" name="image" class="form-input" accept="image/*">
+                    @error('image')
+                        <p class="error-message">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="form-group">
@@ -390,14 +493,78 @@
             const quantityInput = document.getElementById('product_quantity');
             const addedProductsList = document.getElementById('added-products-list');
             const form = document.getElementById('create-order-form');
+            const orderSummary = document.getElementById('order-summary');
+            const summaryItems = document.getElementById('summary-items');
+            const summaryTotalAmount = document.getElementById('summary-total-amount');
+            
             let productIndex = 0;
             let addedProductIds = new Set();
+            let totalAmount = 0;
+
+            function updateSummary() {
+                summaryItems.innerHTML = '';
+                totalAmount = 0;
+
+                // Get all hidden product inputs
+                const productInputs = form.querySelectorAll('input[name^="products"][name$="[id]"]');
+                
+                if (productInputs.length === 0) {
+                    orderSummary.style.display = 'none';
+                    return;
+                }
+                
+                orderSummary.style.display = 'block';
+                
+                productInputs.forEach(input => {
+                    const productId = input.value;
+                    const nameMatch = input.name.match(/products\[(\d+)\]/);
+                    
+                    if (nameMatch) {
+                        const index = nameMatch[1];
+                        const quantityInput = form.querySelector(`input[name="products[${index}][quantity]"]`);
+                        
+                        if (quantityInput) {
+                            const quantity = parseInt(quantityInput.value, 10);
+                            const productOption = productSelect.querySelector(`option[value="${productId}"]`);
+                            
+                            if (productOption) {
+                                const productName = productOption.getAttribute('data-name');
+                                const productPrice = parseFloat(productOption.getAttribute('data-price'));
+                                const itemTotal = productPrice * quantity;
+                                
+                                const summaryItem = document.createElement('div');
+                                summaryItem.classList.add('summary-item');
+                                summaryItem.innerHTML = `
+                                    <span>${productName} (${quantity} × $${productPrice.toFixed(2)})</span>
+                                    <span>$${itemTotal.toFixed(2)}</span>
+                                `;
+                                summaryItems.appendChild(summaryItem);
+                                
+                                totalAmount += itemTotal;
+                            }
+                        }
+                    }
+                });
+                
+                summaryTotalAmount.textContent = `$${totalAmount.toFixed(2)}`;
+                
+                // Update hidden total amount field
+                let totalAmountInput = form.querySelector('input[name="total_amount"]');
+                if (!totalAmountInput) {
+                    totalAmountInput = document.createElement('input');
+                    totalAmountInput.type = 'hidden';
+                    totalAmountInput.name = 'total_amount';
+                    form.appendChild(totalAmountInput);
+                }
+                totalAmountInput.value = totalAmount;
+            }
 
             addProductBtn.addEventListener('click', function() {
                 const selectedOption = productSelect.options[productSelect.selectedIndex];
                 const productId = selectedOption.value;
                 const productName = selectedOption.getAttribute('data-name');
                 const productStock = parseInt(selectedOption.getAttribute('data-stock'), 10);
+                const productPrice = parseFloat(selectedOption.getAttribute('data-price'));
                 const quantity = parseInt(quantityInput.value, 10);
 
                 if (!productId) {
@@ -412,7 +579,7 @@
                     alert(`Quantity (${quantity}) exceeds available stock (${productStock}) for ${productName}.`);
                     return;
                 }
-                if (addedProductIds.has(productId)) {
+                if (addedProductIds.has(parseInt(productId, 10))) {
                     alert(`${productName} has already been added. You can remove it and add it again with a different quantity if needed.`);
                     return;
                 }
@@ -430,42 +597,35 @@
                 idInput.type = 'hidden';
                 idInput.name = `products[${productIndex}][id]`;
                 idInput.value = productId;
-                form.appendChild(idInput);
+                listItem.appendChild(idInput);
 
                 const quantityHiddenInput = document.createElement('input');
                 quantityHiddenInput.type = 'hidden';
                 quantityHiddenInput.name = `products[${productIndex}][quantity]`;
                 quantityHiddenInput.value = quantity;
-                form.appendChild(quantityHiddenInput);
+                listItem.appendChild(quantityHiddenInput);
 
-                listItem.dataset.inputId = idInput.name;
-                listItem.dataset.inputQuantity = quantityHiddenInput.name;
-
-                addedProductIds.add(productId);
-
+                addedProductIds.add(parseInt(productId, 10));
                 productIndex++;
 
                 productSelect.selectedIndex = 0;
                 quantityInput.value = 1;
+                
+                updateSummary();
             });
 
             addedProductsList.addEventListener('click', function(e) {
                 if (e.target && e.target.classList.contains('remove-product-btn')) {
                     const itemToRemove = e.target.closest('.added-product-item');
-                    const productIdToRemove = itemToRemove.getAttribute('data-product-id');
+                    const productIdToRemove = parseInt(itemToRemove.getAttribute('data-product-id'), 10);
                     
-                    const idInputToRemove = form.querySelector(`input[name="${itemToRemove.dataset.inputId}"]`);
-                    const quantityInputToRemove = form.querySelector(`input[name="${itemToRemove.dataset.inputQuantity}"]`);
-                    if (idInputToRemove) form.removeChild(idInputToRemove);
-                    if (quantityInputToRemove) form.removeChild(quantityInputToRemove);
-
                     itemToRemove.remove();
-
                     addedProductIds.delete(productIdToRemove);
+                    
+                    updateSummary();
                 }
             });
         });
     </script>
-
 </body>
 </html>

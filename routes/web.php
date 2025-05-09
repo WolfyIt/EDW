@@ -46,20 +46,38 @@ Route::get('/order/search/result', function (Request $request) {
 // Private routes (authenticated users)
 Route::middleware(['auth'])->prefix('private')->name('private.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
-    // Orders routes
-    Route::resource('orders', OrderController::class);
-    Route::get('orders-archived', [OrderController::class, 'archived'])->name('orders.archived');
-    Route::post('orders/{order}/restore', [OrderController::class, 'restore'])->name('orders.restore');
-    
-    // Products routes
-    Route::resource('products', ProductController::class);
-    
-    // Users routes
-    Route::resource('users', UserController::class);
-    Route::get('/users/{user}/profile', [UserController::class, 'profile'])->name('users.profile');
-    
-    // Customers routes
-    Route::resource('customers', CustomerController::class);
+
+    // Routes for creating, deleting, and managing archived orders (Admin, Warehouse, Sales, Purchasing)
+    Route::middleware([\App\Http\Middleware\RoleMiddleware::class . ':admin,warehouse,sales,purchasing'])->group(function () {
+        Route::get('orders/create', [OrderController::class, 'create'])->name('orders.create');
+        Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
+        Route::delete('orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
+        Route::get('orders-archived', [OrderController::class, 'archived'])->name('orders.archived');
+        Route::post('orders/{order}/restore', [OrderController::class, 'restore'])->name('orders.restore');
+    });
+
+    // Routes for viewing and editing orders (Admin, Warehouse, Sales, Purchasing, Route)
+    Route::middleware([\App\Http\Middleware\RoleMiddleware::class . ':admin,warehouse,sales,purchasing,route'])->group(function () {
+        Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+        Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+        Route::put('orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+    });
+
+    // Products routes (Admin, Warehouse, Purchasing)
+    Route::middleware([\App\Http\Middleware\RoleMiddleware::class . ':admin,warehouse,purchasing'])->group(function () {
+        Route::resource('products', ProductController::class);
+    });
+
+    // Users routes (Admin only)
+    Route::middleware([\App\Http\Middleware\RoleMiddleware::class . ':admin'])->group(function () {
+        Route::resource('users', UserController::class);
+        Route::get('/users/{user}/profile', [UserController::class, 'profile'])->name('users.profile');
+    });
+
+    // Customers routes (Admin only)
+    Route::middleware([\App\Http\Middleware\RoleMiddleware::class . ':admin'])->group(function () {
+        Route::resource('customers', CustomerController::class);
+    });
 });
 
