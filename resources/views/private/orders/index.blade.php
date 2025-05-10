@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orders - Halcon</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
     <style>
         :root {
             --primary-color: #000000;
@@ -313,6 +314,34 @@
             font-size: 0.9rem;
             color: var(--secondary-color);
         }
+        
+        .photo-indicators {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .photo-indicator {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        .has-photo {
+            background-color: rgba(52, 199, 89, 0.2);
+            color: #34c759;
+            border: 1px solid #34c759;
+        }
+        
+        .no-photo {
+            background-color: rgba(229, 229, 234, 0.5);
+            color: #8e8e93;
+            border: 1px solid #d1d1d6;
+        }
 
         @media (max-width: 768px) {
             .container {
@@ -390,6 +419,7 @@
                             <th>Invoice Number</th>
                             <th>Status</th>
                             <th>Total Amount</th>
+                            <th>Photos</th>
                             <th>Created At</th>
                             <th>Actions</th>
                         </tr>
@@ -410,6 +440,16 @@
                                     </span>
                                 </td>
                                 <td>${{ number_format($order->total_amount, 2) }}</td>
+                                <td>
+                                    <div class="photo-indicators">
+                                        <span class="photo-indicator {{ $order->image_path ? 'has-photo' : 'no-photo' }}" title="{{ $order->image_path ? 'Has processing photo' : 'No processing photo' }}">
+                                            <i class="fas fa-camera"></i>P
+                                        </span>
+                                        <span class="photo-indicator {{ $order->photo_delivered ? 'has-photo' : 'no-photo' }}" title="{{ $order->photo_delivered ? 'Has delivery photo' : 'No delivery photo' }}">
+                                            <i class="fas fa-camera"></i>D
+                                        </span>
+                                    </div>
+                                </td>
                                 <td class="date-display">{{ $order->created_at->format('M d, Y g:i A') }}</td>
                                 <td>
                                     <div class="action-buttons">

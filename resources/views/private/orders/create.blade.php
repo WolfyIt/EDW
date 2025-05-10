@@ -462,12 +462,35 @@
                     </div>
                 </div>
 
-                <div class="form-group image-upload">
-                    <label for="image" class="form-label">Upload Order Image</label>
-                    <input type="file" id="image" name="image" class="form-input" accept="image/*">
-                    @error('image')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
+                <div class="form-group">
+                    <h3 class="section-title" style="margin-top: 2rem;">Order Photos</h3>
+                    <p class="order-photos-info" style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Each order can have up to 2 photos: one during processing and one for delivery confirmation.
+                    </p>
+                    
+                    <!-- Processing Photo Section -->
+                    <div class="form-group image-upload">
+                        <label for="image_processing" class="form-label">Processing Photo</label>
+                        <input type="file" id="image_processing" name="image_processing" class="form-input" accept="image/*">
+                        <p class="image-help-text" style="font-size: 0.85rem; color: var(--secondary-color); margin-top: 0.5rem;">
+                            Upload a photo of the order being processed.
+                        </p>
+                        @error('image_processing')
+                            <p class="error-message">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    
+                    <!-- Delivery Photo Section - only shown if status is completed -->
+                    <div class="form-group image-upload" id="delivery_photo_section" style="display: none;">
+                        <label for="image_delivered" class="form-label">Delivery Confirmation Photo</label>
+                        <input type="file" id="image_delivered" name="image_delivered" class="form-input" accept="image/*">
+                        <p class="image-help-text" style="font-size: 0.85rem; color: var(--secondary-color); margin-top: 0.5rem;">
+                            Upload a photo confirming delivery to the customer.
+                        </p>
+                        @error('image_delivered')
+                            <p class="error-message">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -496,6 +519,28 @@
             const orderSummary = document.getElementById('order-summary');
             const summaryItems = document.getElementById('summary-items');
             const summaryTotalAmount = document.getElementById('summary-total-amount');
+            const statusSelect = document.getElementById('status');
+            const deliveryPhotoSection = document.getElementById('delivery_photo_section');
+            
+            // Show/hide delivery photo section based on selected status
+            statusSelect.addEventListener('change', function() {
+                updatePhotoSections(this.value);
+            });
+            
+            // Function to update photo sections based on status
+            function updatePhotoSections(status) {
+                // Processing photo section always visible for new orders
+                
+                // Delivery photo section only visible for completed orders
+                if (status === 'completed') {
+                    deliveryPhotoSection.style.display = 'block';
+                } else {
+                    deliveryPhotoSection.style.display = 'none';
+                }
+            }
+            
+            // Initial check for status on page load
+            updatePhotoSections(statusSelect.value);
             
             let productIndex = 0;
             let addedProductIds = new Set();

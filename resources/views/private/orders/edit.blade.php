@@ -326,6 +326,28 @@
             max-width: 200px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .current-photo-container {
+            margin: 0.5rem 0 1rem;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: inline-block;
+        }
+        
+        .current-photo-container p {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+        }
+        
+        .image-help-text {
+            font-size: 0.85rem;
+            color: var(--secondary-color);
+            margin-top: 0.5rem;
         }
 
         @media (max-width: 768px) {
@@ -405,10 +427,18 @@
             <form action="{{ route('private.orders.update', $order->id) }}" method="POST" id="edit-order-form" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
+                
+                <!-- Hidden total_amount field to prevent validation errors when only uploading photos -->
+                <input type="hidden" name="total_amount" value="{{ $order->total_amount }}">
 
                 <div class="form-group">
                     <label for="order_number" class="form-label">Order Number</label>
                     <input type="text" id="order_number" name="order_number" class="form-input" value="{{ old('order_number', $order->order_number) }}" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label for="invoice_number_display" class="form-label">Invoice Number</label>
+                    <input type="text" id="invoice_number_display" class="form-input" value="{{ $order->invoice_number }}" readonly>
                 </div>
 
                 <div class="form-group">
@@ -491,18 +521,57 @@
                     </div>
                 </div>
 
-                <div class="form-group image-upload">
-                    <label for="image" class="form-label">Upload Order Image</label>
-                    @if($order->image_path)
-                        <div>
-                            <p>Current image:</p>
-                            <img src="{{ asset('storage/' . $order->image_path) }}" alt="Order Image" class="current-image">
-                        </div>
-                    @endif
-                    <input type="file" id="image" name="image" class="form-input" accept="image/*">
-                    @error('image')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
+                <div class="form-group">
+                    <h3 class="section-title" style="margin-top: 2rem;">Order Photos</h3>
+                    <p class="order-photos-info" style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Each order can have up to 2 photos: one during processing and one for delivery confirmation.
+                    </p>
+                    
+                    <!-- Processing Photo Section -->
+                    <div class="form-group image-upload">
+                        <label for="image_processing" class="form-label">Processing Photo</label>
+                        @if($order->image_path)
+                            <div class="current-photo-container">
+                                <p>Current processing photo:</p>
+                                <img src="{{ asset('storage/' . $order->image_path) }}" alt="Processing Photo" class="current-image">
+                            </div>
+                        @endif
+                        
+                        @if($order->status == 'processing' || $order->status == 'pending')
+                            <input type="file" id="image_processing" name="image_processing" class="form-input" accept="image/*">
+                            <p class="image-help-text">Upload a photo of the order being processed.</p>
+                        @else
+                            <p class="image-help-text" style="font-style: italic; margin-top: 0.5rem;">
+                                Processing photo can only be added when order is in pending or processing status.
+                            </p>
+                        @endif
+                        @error('image_processing')
+                            <p class="error-message">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    
+                    <!-- Delivery Photo Section -->
+                    <div class="form-group image-upload">
+                        <label for="image_delivered" class="form-label">Delivery Confirmation Photo</label>
+                        @if($order->photo_delivered)
+                            <div class="current-photo-container">
+                                <p>Current delivery photo:</p>
+                                <img src="{{ asset('storage/' . $order->photo_delivered) }}" alt="Delivery Photo" class="current-image">
+                            </div>
+                        @endif
+                        
+                        @if($order->status == 'completed')
+                            <input type="file" id="image_delivered" name="image_delivered" class="form-input" accept="image/*">
+                            <p class="image-help-text">Upload a photo confirming delivery to the customer.</p>
+                        @else
+                            <p class="image-help-text" style="font-style: italic; margin-top: 0.5rem;">
+                                Delivery photo can only be added when order is in completed status.
+                            </p>
+                        @endif
+                        @error('image_delivered')
+                            <p class="error-message">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -531,6 +600,50 @@
             const orderSummary = document.getElementById('order-summary');
             const summaryItems = document.getElementById('summary-items');
             const summaryTotalAmount = document.getElementById('summary-total-amount');
+            const statusSelect = document.getElementById('status');
+            
+            // Get photo input sections by finding the label elements
+            const processingPhotoSection = document.querySelector('label[for="image_processing"]').closest('.form-group');
+            const deliveryPhotoSection = document.querySelector('label[for="image_delivered"]').closest('.form-group');
+            
+            // Update visible photo inputs based on order status
+            statusSelect.addEventListener('change', function() {
+                updatePhotoSections(this.value);
+            });
+            
+            // Function to update photo sections based on status
+            function updatePhotoSections(status) {
+                // Processing photo section handling
+                const processingInput = processingPhotoSection.querySelector('input[type="file"]');
+                const processingHelp = processingPhotoSection.querySelector('.image-help-text');
+                
+                if (status === 'pending' || status === 'processing') {
+                    processingInput.style.display = 'block';
+                    processingHelp.textContent = 'Upload a photo of the order being processed.';
+                    processingHelp.style.fontStyle = 'normal';
+                } else {
+                    processingInput.style.display = 'none';
+                    processingHelp.textContent = 'Processing photo can only be added when order is in pending or processing status.';
+                    processingHelp.style.fontStyle = 'italic';
+                }
+                
+                // Delivery photo section handling
+                const deliveryInput = deliveryPhotoSection.querySelector('input[type="file"]');
+                const deliveryHelp = deliveryPhotoSection.querySelector('.image-help-text');
+                
+                if (status === 'completed') {
+                    deliveryInput.style.display = 'block';
+                    deliveryHelp.textContent = 'Upload a photo confirming delivery to the customer.';
+                    deliveryHelp.style.fontStyle = 'normal';
+                } else {
+                    deliveryInput.style.display = 'none';
+                    deliveryHelp.textContent = 'Delivery photo can only be added when order is in completed status.';
+                    deliveryHelp.style.fontStyle = 'italic';
+                }
+            }
+            
+            // Initialize photo sections based on current status
+            updatePhotoSections(statusSelect.value);
             
             let productIndex = {{ count($order->products) }};
             let addedProductIds = new Set([{{ $order->products->pluck('id')->implode(',') }}]);

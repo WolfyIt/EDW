@@ -321,7 +321,7 @@
                 @elseif($order->status === 'In route')
                     <div class="result-item">
                         <span class="result-label">Loading Evidence</span>
-                        <img src="{{ asset('storage/'.$order->photo_route) }}" alt="Loading Evidence" style="max-width:100%;border-radius:10px;" />
+                        <img src="{{ asset('storage/'.$order->image_path) }}" alt="Loading Evidence" style="max-width:100%;border-radius:10px;" />
                     </div>
                 @elseif($order->status === 'In process')
                     <div class="result-item">

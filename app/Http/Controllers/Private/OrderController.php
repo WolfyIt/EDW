@@ -69,7 +69,8 @@ class OrderController extends Controller
             'products' => 'required|array|min:1', // Ensure at least one product is selected
             'products.*.id' => 'required|exists:products,id',
             'products.*.quantity' => 'required|integer|min:1',
-            'image' => 'nullable|image|max:2048', // Allow image upload
+            'image_processing' => 'nullable|image|max:2048', // Processing image
+            'image_delivered' => 'nullable|image|max:2048',  // Delivery image
         ]);
 
         // Use a database transaction to ensure atomicity
@@ -126,9 +127,19 @@ class OrderController extends Controller
                 'notes' => $validated['notes'],
             ];
 
-            // Handle image upload if present
-            if ($request->hasFile('image')) {
-                $orderData['image_path'] = $request->file('image')->store('orders', 'public');
+            // Handle image uploads based on status
+            if ($validated['status'] === 'pending' || $validated['status'] === 'processing') {
+                // For pending/processing orders, allow processing image upload
+                if ($request->hasFile('image_processing') && $request->file('image_processing')->isValid()) {
+                    $orderData['image_path'] = $request->file('image_processing')->store('orders', 'public');
+                }
+            } 
+            
+            if ($validated['status'] === 'completed') {
+                // For completed orders, allow delivery confirmation image upload
+                if ($request->hasFile('image_delivered') && $request->file('image_delivered')->isValid()) {
+                    $orderData['photo_delivered'] = $request->file('image_delivered')->store('orders', 'public');
+                }
             }
 
             $order = Order::create($orderData);
@@ -168,31 +179,66 @@ class OrderController extends Controller
     // Update an existing order
     public function update(Request $request, Order $order)
     {
-        $rules = [
-            'order_number'   => 'required|unique:orders,order_number,' . $order->id,
-            'customer_number'=> 'required|string',
-            'invoice_number' => 'required|unique:orders,invoice_number,' . $order->id,
-            'status'         => 'required|in:' . implode(',', Order::getStatuses()),
-            'total_amount'   => 'required|numeric|min:0',
-            'notes'          => 'nullable|string',
-            'image'          => 'nullable|image|max:2048',
-            'photo_route'    => 'nullable|image|max:2048',
-            'photo_delivered'=> 'nullable|image|max:2048',
-        ]; 
+        // Check if we're only updating photos
+        $isOnlyPhotoUpload = !$request->has('total_amount') && 
+            ($request->hasFile('image_processing') || $request->hasFile('image_delivered'));
+        
+        // Different validation rules based on what's being updated
+        if ($isOnlyPhotoUpload) {
+            // Minimal validation for photo-only updates
+            $rules = [
+                'status'           => 'required|in:' . implode(',', Order::getStatuses()),
+                'customer_id'      => 'required|exists:customers,id',
+                'image_processing' => 'nullable|image|max:2048',
+                'image_delivered'  => 'nullable|image|max:2048',
+            ];
+        } else {
+            // Full validation for regular updates
+            $rules = [
+                'order_number'     => 'required|unique:orders,order_number,' . $order->id,
+                'customer_id'      => 'required|exists:customers,id',
+                'status'           => 'required|in:' . implode(',', Order::getStatuses()),
+                'total_amount'     => 'required|numeric|min:0',
+                'notes'            => 'nullable|string',
+                'image_processing' => 'nullable|image|max:2048', // Processing image
+                'image_delivered'  => 'nullable|image|max:2048', // Delivery confirmation image
+            ];
+        }
+        
         $data = $request->validate($rules);
+        
+        // Get customer details
+        $customer = Customer::findOrFail($data['customer_id']);
+        
+        // Add customer_number from the selected customer
+        $data['customer_number'] = $customer->customer_number;
+        
+        // Keep the original invoice_number
+        $data['invoice_number'] = $order->invoice_number;
 
-        if ($request->hasFile('image')) {
-            $data['image_path'] = $request->file('image')->store('orders', 'public');
+        // Process regular data without images
+        $order->fill($data);
+
+        // Handle processing image upload if provided
+        if ($request->hasFile('image_processing') && $request->file('image_processing')->isValid()) {
+            // Only allow processing image upload for pending or processing orders
+            if (in_array($order->status, ['pending', 'processing'])) {
+                $imagePath = $request->file('image_processing')->store('orders', 'public');
+                $order->image_path = $imagePath;
+            }
         }
-        if ($request->hasFile('photo_route')) {
-            $data['photo_route'] = $request->file('photo_route')->store('orders', 'public');
-        }
-        if ($request->hasFile('photo_delivered')) {
-            $data['photo_delivered'] = $request->file('photo_delivered')->store('orders', 'public');
+        
+        // Handle delivery image upload if provided
+        if ($request->hasFile('image_delivered') && $request->file('image_delivered')->isValid()) {
+            // Only allow delivery image upload for completed orders
+            if ($order->status === 'completed') {
+                $imagePath = $request->file('image_delivered')->store('orders', 'public');
+                $order->photo_delivered = $imagePath;
+            }
         }
 
-        // Update the order
-        $order->update($data);
+        // Save the updated order
+        $order->save();
         
         // Recalculate the total amount
         if (isset($request->products) && is_array($request->products)) {

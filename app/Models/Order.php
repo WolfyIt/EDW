@@ -20,9 +20,8 @@ class Order extends Model
         'total_amount',
         'notes',
         'archived',              // added archived flag
-        'photo_route',           // added evidence en ruta
-        'photo_delivered',       // added evidence al entregar
-        'image_path',            // added for general order image
+        'photo_delivered',       // photo when order is delivered
+        'image_path',            // photo during processing
     ];
 
     protected $casts = [

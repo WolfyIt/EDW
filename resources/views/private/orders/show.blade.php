@@ -309,10 +309,59 @@
             <h1 class="page-title">Order Details</h1>
             <p class="page-subtitle">View detailed information about this order</p>
         </div>
-        <!-- Placeholder image for order -->
-        <div class="order-image-placeholder" style="margin:1.5rem 0; text-align:center;">
-            <img src="https://via.placeholder.com/800x200?text=Order+Image" alt="Order Placeholder" style="width:100%; max-width:800px; border-radius:10px;">
+        
+        <!-- Order Photos Section -->
+        <div class="orders-photos-section" style="margin:1.5rem 0;">
+            <h2 class="section-title" style="margin-bottom: 1rem;">Order Photos</h2>
+            <div style="display: flex; gap: 1.5rem; flex-wrap: wrap;">
+                <!-- Processing Photo -->
+                <div class="order-card photo-card" style="flex: 1; min-width: 300px; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.2rem; font-weight: 500; color: var(--secondary-color);">
+                        Processing Photo
+                    </h3>
+                    
+                    @if($order->image_path)
+                        <img src="{{ asset('storage/' . $order->image_path) }}" alt="Order Processing Image" 
+                             style="width:100%; border-radius:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    @else
+                        <div style="padding: 3rem; background-color: #f8f9fa; border-radius: 10px; border: 1px dashed var(--border-color);">
+                            <p style="color: var(--secondary-color); font-style: italic; text-align: center;">No processing photo available</p>
+                            @if($order->status == 'pending' || $order->status == 'processing')
+                                <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--secondary-color); text-align: center;">
+                                    A processing photo can be added by editing this order
+                                </p>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+                
+                <!-- Delivery Photo -->
+                <div class="order-card photo-card" style="flex: 1; min-width: 300px; padding: 1.5rem;">
+                    <h3 style="margin-bottom: 1rem; font-size: 1.2rem; font-weight: 500; color: var(--secondary-color);">
+                        Delivery Confirmation
+                    </h3>
+                    
+                    @if($order->photo_delivered)
+                        <img src="{{ asset('storage/' . $order->photo_delivered) }}" alt="Order Delivery Image" 
+                             style="width:100%; border-radius:10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+                    @else
+                        <div style="padding: 3rem; background-color: #f8f9fa; border-radius: 10px; border: 1px dashed var(--border-color);">
+                            <p style="color: var(--secondary-color); font-style: italic; text-align: center;">No delivery photo available</p>
+                            @if($order->status === 'completed')
+                                <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--secondary-color); text-align: center;">
+                                    A delivery photo can be added by editing this order
+                                </p>
+                            @else
+                                <p style="font-size: 0.85rem; margin-top: 0.5rem; color: var(--secondary-color); text-align: center;">
+                                    Delivery photo can be added when order is completed
+                                </p>
+                            @endif
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
+        
         <div class="order-card">
             <div class="order-section">
                 <h2 class="section-title">Order Information</h2>
