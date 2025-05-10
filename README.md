@@ -18,6 +18,14 @@ This Laravel application automates internal processes for Halcón, allowing cust
   - Real-time calculation of order totals
   - Flash notifications for success and error messages
 
+- **Order Photo System**:
+  - Each order can have up to 2 photos: processing photo and delivery confirmation photo
+  - Processing photo can be added only for orders with 'pending' or 'processing' status
+  - Delivery photo can be added only for orders with 'completed' status
+  - Dynamic photo upload fields based on order status
+  - Photo indicators in order list to show which photos are available
+  - Side-by-side display of photos in order detail view
+
 - **Role-Based System**:
   - **Admin**: Full access to all system features and modules (Users, Products, Customers, Orders)
   - **Warehouse**: Access to Orders and Products modules with inventory management
