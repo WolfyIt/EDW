@@ -16,6 +16,21 @@
             --success-color: #34c759;
         }
 
+        <!-- Helper scripts for testing -->
+        <script>
+            function getImageUrl(path) {
+                if (!path) return null;
+                // For mock data, use placeholder images
+                if (path === 'orders/mockprocessing.jpg') {
+                    return 'https://placehold.co/600x400/e3f2fd/1976d2?text=Processing+Photo';
+                }
+                if (path === 'orders/mockdelivery.jpg') {
+                    return 'https://placehold.co/600x400/e8f5e9/2e7d32?text=Delivery+Photo';
+                }
+                return '{{ asset('storage') }}/' + path;
+            }
+        </script>
+
         * {
             margin: 0;
             padding: 0;
@@ -267,24 +282,131 @@
                 font-size: 1rem;
             }
         }
+
+        /* Order Photos Styling */
+        .order-photos-section {
+            margin-bottom: 2rem;
+        }
+
+        .photo-card {
+            transition: all 0.3s ease;
+        }
+
+        .photo-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .result-subtitle {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 0.5rem;
+        }
+
+        /* Alert message styles */
+        .error-alert {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #c62828;
+            font-weight: 500;
+        }
+
+        .success-alert {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #2e7d32;
+            font-weight: 500;
+        }
+        
+        /* Testing/Debug section styles */
+        .available-orders {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: #f5f5f7;
+            border-radius: 10px;
+            border: 1px dashed #ccc;
+        }
+        
+        .available-orders h3 {
+            margin-bottom: 1rem;
+            color: #333;
+            font-size: 1.2rem;
+        }
+        
+        .order-test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .test-order-item {
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .test-order-item div {
+            margin-bottom: 0.5rem;
+        }
+        
+        .test-info {
+            margin-top: 1rem;
+            font-style: italic;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .search-tip {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="search-header">
             <h1 class="search-title">Order Search</h1>
-            <p class="search-subtitle">Enter your customer name and invoice number to track your order</p>
+            <p class="search-subtitle">Enter your customer number and invoice number to track your order</p>
         </div>
+
+        @if(session('error'))
+            <div class="error-alert">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        @if(session('success'))
+            <div class="success-alert">
+                {{ session('success') }}
+            </div>
+        @endif
 
         <form action="{{ route('order.search') }}" method="GET" class="search-form">
             <div class="form-group">
-                <label for="customer_number" class="form-label">Customer Name</label>
-                <input type="text" name="customer_number" id="customer_number" class="form-input" required>
+                <label for="order_number" class="form-label">Order Number</label>
+                <input type="text" name="order_number" id="order_number" class="form-input" value="{{ old('order_number') }}">
+            </div>
+            <div class="form-group">
+                <label for="customer_number" class="form-label">Customer Number</label>
+                <input type="text" name="customer_number" id="customer_number" class="form-input" value="{{ old('customer_number') }}">
             </div>
             <div class="form-group">
                 <label for="invoice_number" class="form-label">Invoice Number</label>
-                <input type="text" name="invoice_number" id="invoice_number" class="form-input" required>
+                <input type="text" name="invoice_number" id="invoice_number" class="form-input" value="{{ old('invoice_number') }}">
             </div>
+            <p class="search-tip">Enter at least one search criteria above.</p>
             <button type="submit" class="search-button">Search Order</button>
         </form>
 
@@ -313,22 +435,47 @@
                         {{ ucfirst($order->status) }}
                     </span>
                 </div>
-                @if($order->status === 'Delivered')
-                    <div class="result-item">
-                        <span class="result-label">Proof of Delivery</span>
-                        <img src="{{ asset('storage/'.$order->photo_delivered) }}" alt="Delivery Evidence" style="max-width:100%;border-radius:10px;" />
+                
+                <!-- Order Photos Section -->
+                <div class="order-photos-section" style="margin-top: 1.5rem;">
+                    <h3 class="result-subtitle">Order Photos</h3>
+                    <div style="display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 1rem;">
+                        <!-- Processing Photo -->
+                        <div class="photo-card" style="flex: 1; min-width: 250px; background: #f8f9fa; border-radius: 10px; padding: 1rem;">
+                            <h4 style="margin-bottom: 0.8rem; font-size: 1rem; font-weight: 500; color: var(--secondary-color);">
+                                Processing Photo
+                            </h4>
+                            
+                            @if($order->image_path)
+                                <img src="@if(strpos($order->image_path, 'mock') !== false) https://placehold.co/600x400/e3f2fd/1976d2?text=Processing+Photo @else {{ asset('storage/' . $order->image_path) }} @endif" 
+                                     alt="Order Processing Image" 
+                                     style="width:100%; border-radius:8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            @else
+                                <div style="padding: 2rem; background-color: #f1f1f1; border-radius: 8px; border: 1px dashed #d2d2d7; text-align: center;">
+                                    <p style="color: var(--secondary-color); font-style: italic;">No processing photo available</p>
+                                </div>
+                            @endif
+                        </div>
+                        
+                        <!-- Delivery Photo -->
+                        <div class="photo-card" style="flex: 1; min-width: 250px; background: #f8f9fa; border-radius: 10px; padding: 1rem;">
+                            <h4 style="margin-bottom: 0.8rem; font-size: 1rem; font-weight: 500; color: var(--secondary-color);">
+                                Delivery Confirmation
+                            </h4>
+                            
+                            @if($order->photo_delivered)
+                                <img src="@if(strpos($order->photo_delivered, 'mock') !== false) https://placehold.co/600x400/e8f5e9/2e7d32?text=Delivery+Photo @else {{ asset('storage/' . $order->photo_delivered) }} @endif" 
+                                     alt="Order Delivery Image" 
+                                     style="width:100%; border-radius:8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            @else
+                                <div style="padding: 2rem; background-color: #f1f1f1; border-radius: 8px; border: 1px dashed #d2d2d7; text-align: center;">
+                                    <p style="color: var(--secondary-color); font-style: italic;">No delivery photo available</p>
+                                </div>
+                            @endif
+                        </div>
                     </div>
-                @elseif($order->status === 'In route')
-                    <div class="result-item">
-                        <span class="result-label">Loading Evidence</span>
-                        <img src="{{ asset('storage/'.$order->image_path) }}" alt="Loading Evidence" style="max-width:100%;border-radius:10px;" />
-                    </div>
-                @elseif($order->status === 'In process')
-                    <div class="result-item">
-                        <span class="result-label">In Process Since</span>
-                        <span class="result-value">{{ $order->updated_at->format('Y-m-d H:i') }}</span>
-                    </div>
-                @endif
+                </div>
+
                 <div class="result-item">
                     <span class="result-label">Delivery Address</span>
                     <span class="result-value">{{ $order->customer->address }}</span>
@@ -361,7 +508,7 @@
                         </tr>
                     </tfoot>
                 </table>
-                @if($order->notes)
+                @if(isset($order->notes) && $order->notes)
                 <div class="result-item">
                     <span class="result-label">Additional Notes</span>
                     <span class="result-value">{{ $order->notes }}</span>

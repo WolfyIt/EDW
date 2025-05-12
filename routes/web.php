@@ -25,21 +25,61 @@ Route::get('/home', function () {
 
 // Order search routes
 Route::get('/order/search', function () {
-    return view('public.orders.search');
+    try {
+        // Get most recent orders for quick search
+        $recentOrders = Order::latest()->take(5)->get();
+        
+        return view('public.orders.search', compact('recentOrders'));
+    } catch (\Exception $e) {
+        // If database error occurs, provide empty collection
+        $recentOrders = collect([]);
+        return view('public.orders.search', compact('recentOrders'))
+            ->with('error', 'Unable to retrieve recent orders. Database connection issue.');
+    }
 })->name('order.search.form');
 
 Route::get('/order/search/result', function (Request $request) {
-    $customer_number = $request->input('customer_number');
-    $invoice_number = $request->input('invoice_number');
-
-    $order = Order::where('customer_number', $customer_number)
-                  ->where('invoice_number', $invoice_number)
-                  ->first();
-
-    if ($order) {
-        return view('public.orders.search', compact('order'));
-    } else {
-        return redirect()->route('order.search.form')->with('error', 'Order not found.');
+    try {
+        // Get most recent orders for the search form
+        $recentOrders = Order::latest()->take(5)->get();
+        
+        // Get search inputs
+        $customer_number = $request->input('customer_number');
+        $invoice_number = $request->input('invoice_number');
+        $order_number = $request->input('order_number');
+        
+        // Build the query to find the order
+        $query = Order::query();
+        
+        if (!empty($customer_number)) {
+            $query->where('customer_number', 'like', "%{$customer_number}%");
+        }
+        
+        if (!empty($invoice_number)) {
+            $query->where('invoice_number', 'like', "%{$invoice_number}%");
+        }
+        
+        if (!empty($order_number)) {
+            $query->where('order_number', 'like', "%{$order_number}%");
+        }
+        
+        // Load relationships for complete order information
+        $query->with(['customer', 'products']);
+        
+        // Get the first matching order
+        $order = $query->first();
+        
+        if ($order) {
+            return view('public.orders.search', compact('order', 'recentOrders'));
+        } else {
+            return redirect()->route('order.search.form')
+                ->with('error', 'Order not found. Please check your search criteria and try again.')
+                ->withInput();
+        }
+    } catch (\Exception $e) {
+        return redirect()->route('order.search.form')
+            ->with('error', 'An error occurred while searching for orders: ' . $e->getMessage())
+            ->withInput();
     }
 })->name('order.search');
 
