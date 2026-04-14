@@ -26,13 +26,13 @@ Automatiza los procesos internos permitiendo el seguimiento de pedidos con evide
 
 ## Roles del sistema
 
-| Rol          | Acceso principal                              | Funciones principales                     |
-|--------------|-----------------------------------------------|-------------------------------------------|
-| **Admin**    | Todo el sistema                               | Gestión completa (Usuarios, Productos, Clientes, Pedidos) |
-| **Almacén**  | Pedidos y Productos                           | Gestión de inventario                     |
-| **Ventas**   | Pedidos y Clientes                            | Gestión de clientes y pedidos             |
-| **Compras**  | Pedidos y Productos                           | Gestión de abastecimiento                 |
-| **Ruta**     | Pedidos                                       | Subida de evidencia fotográfica           |
+| Rol         | Acceso principal                              | Funciones principales                     |
+|-------------|-----------------------------------------------|-------------------------------------------|
+| **Admin**   | Todo el sistema                               | Gestión completa (Usuarios, Productos, Clientes, Pedidos) |
+| **Almacén** | Pedidos y Productos                           | Gestión de inventario                     |
+| **Ventas**  | Pedidos y Clientes                            | Gestión de clientes y pedidos             |
+| **Compras** | Pedidos y Productos                           | Gestión de abastecimiento                 |
+| **Ruta**    | Pedidos                                       | Subida de evidencia fotográfica           |
 
 ## Tecnologías utilizadas
 
@@ -57,7 +57,7 @@ php artisan key:generate
 php artisan migrate:fresh --seed
 php artisan serve
 
-Abre http://localhost:8000
+```
 
 ## Credenciales de prueba
 
