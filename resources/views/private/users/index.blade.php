@@ -55,18 +55,54 @@
 
         .nav-links {
             display: flex;
-            gap: 2rem;
+            gap: 1.5rem;
+            align-items: center;
         }
 
         .nav-link {
             text-decoration: none;
             color: var(--secondary-color);
             font-size: 0.9rem;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            background-color: transparent;
         }
 
         .nav-link:hover {
             color: var(--primary-color);
+            background-color: var(--hover-color);
+            transform: translateY(-2px);
+        }
+        
+        .nav-link-active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .logout-link {
+            color: var(--accent-color);
+            background-color: rgba(0, 102, 204, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .logout-link:hover {
+            background-color: rgba(0, 102, 204, 0.2);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            margin-left: 1rem;
         }
 
         .container {
@@ -229,16 +265,7 @@
             border-radius: 6px;
             font-size: 0.875rem;
             font-weight: 500;
-        }
-
-        .role-admin {
-            color: var(--accent-color);
-            background-color: rgba(0, 102, 204, 0.1);
-        }
-
-        .role-user {
-            color: var(--success-color);
-            background-color: rgba(52, 199, 89, 0.1);
+            color: white;
         }
 
         .empty-state {
@@ -286,11 +313,33 @@
     <nav class="nav">
         <a href="{{ route('private.dashboard') }}" class="nav-logo">Halcon</a>
         <div class="nav-links">
-            <a href="{{ route('private.orders.index') }}" class="nav-link">Orders</a>
-            <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
-            <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
-            <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
+            @if(Auth::user()->role && in_array(strtolower(Auth::user()->role->name), ['admin', 'warehouse', 'sales', 'purchasing']))
+                <a href="{{ route('private.orders.index') }}" class="nav-link">Orders</a>
+            @endif
+            @if(Auth::user()->role && in_array(strtolower(Auth::user()->role->name), ['admin', 'warehouse']))
+                <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
+            @endif
+            @if(Auth::user()->role && strtolower(Auth::user()->role->name) === 'admin')
+                <a href="{{ route('private.users.index') }}" class="nav-link nav-link-active">Users</a>
+                <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
+            @endif
+            {{-- Logout Link --}}
+            @auth
+            <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                @csrf
+                <a href="{{ route('logout') }}"
+                   onclick="event.preventDefault();
+                            this.closest('form').submit();"
+                   class="nav-link logout-link">
+                    Logout
+                </a>
+            </form>
+            <div class="user-avatar" style="background-color: {{ '#' . substr(md5(Auth::user()->name), 0, 6) }}">
+                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+            </div>
+            @endauth
         </div>
+    </nav>
     </nav>
 
     <div class="container">
@@ -327,9 +376,27 @@
                                 <td>{{ $user->name }}</td>
                                 <td>{{ $user->email }}</td>
                                 <td>
-                                    <span class="role-badge
-                                        @if($user->role->name === 'admin') role-admin
-                                        @else role-user @endif">
+                                    <span class="role-badge" style="background-color: 
+                                        @switch(strtolower($user->role->name))
+                                            @case('admin')
+                                                #E67E22
+                                                @break
+                                            @case('warehouse')
+                                                #3498DB
+                                                @break
+                                            @case('sales')
+                                                #9B59B6
+                                                @break
+                                            @case('purchasing')
+                                                #1ABC9C
+                                                @break
+                                            @case('route')
+                                                #F1C40F
+                                                @break
+                                            @default
+                                                #27AE60
+                                        @endswitch
+                                        ;">
                                         {{ ucfirst($user->role->name) }}
                                     </span>
                                 </td>

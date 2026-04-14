@@ -19,6 +19,9 @@ class Order extends Model
         'status',
         'total_amount',
         'notes',
+        'archived',              // added archived flag
+        'photo_delivered',       // photo when order is delivered
+        'image_path',            // photo during processing
     ];
 
     protected $casts = [
@@ -55,6 +58,31 @@ class Order extends Model
         return $this->belongsToMany(Product::class, 'order_product')
             ->withPivot('quantity', 'price')
             ->withTimestamps();
+    }
+
+    /**
+     * Calculate the total amount of the order based on its products
+     *
+     * @return float
+     */
+    public function calculateTotal()
+    {
+        $total = 0;
+        foreach ($this->products as $product) {
+            $total += $product->pivot->price * $product->pivot->quantity;
+        }
+        return $total;
+    }
+
+    /**
+     * Update the total amount of the order based on its products
+     *
+     * @return void
+     */
+    public function updateTotal()
+    {
+        $this->total_amount = $this->calculateTotal();
+        $this->save();
     }
 }
 

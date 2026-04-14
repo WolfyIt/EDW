@@ -4,18 +4,21 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+class CreateRolesTable extends Migration {
     public function up() {
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('roles');
         Schema::create('roles', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('name')->unique();
             $table->timestamps();
         });
+        Schema::enableForeignKeyConstraints();
     }
 
     public function down() {
         Schema::dropIfExists('roles');
     }
-};
+}
 
 

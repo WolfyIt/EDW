@@ -56,18 +56,54 @@
 
         .nav-links {
             display: flex;
-            gap: 2rem;
+            gap: 1.5rem;
+            align-items: center;
         }
 
         .nav-link {
             text-decoration: none;
             color: var(--secondary-color);
             font-size: 0.9rem;
-            transition: color 0.3s ease;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            background-color: transparent;
         }
 
         .nav-link:hover {
             color: var(--primary-color);
+            background-color: var(--hover-color);
+            transform: translateY(-2px);
+        }
+        
+        .nav-link-active {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        .logout-link {
+            color: var(--accent-color);
+            background-color: rgba(0, 102, 204, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .logout-link:hover {
+            background-color: rgba(0, 102, 204, 0.2);
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            margin-left: 1rem;
         }
 
         .container {
@@ -228,16 +264,114 @@
                 padding: 1.5rem;
             }
         }
+
+        .product-selection-area {
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        .product-adder {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .product-adder .form-group {
+            margin-bottom: 0;
+            flex-grow: 1;
+        }
+
+        .added-products-list {
+            list-style: none;
+            padding: 0;
+            margin-top: 1rem;
+        }
+
+        .added-product-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            background-color: var(--hover-color);
+        }
+
+        .added-product-item span {
+            font-size: 0.9rem;
+        }
+
+        .remove-product-btn {
+            background: none;
+            border: none;
+            color: var(--error-color);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.25rem;
+        }
+
+        .order-summary {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .order-summary h3 {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .summary-total {
+            font-weight: bold;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px dashed var(--border-color);
+        }
+
+        .image-upload {
+            margin-top: 1.5rem;
+        }
     </style>
 </head>
 <body>
     <nav class="nav">
         <a href="{{ route('private.dashboard') }}" class="nav-logo">Halcon</a>
         <div class="nav-links">
-            <a href="{{ route('private.orders.index') }}" class="nav-link">Orders</a>
-            <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
-            <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
-            <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
+            @if(Auth::user()->role && in_array(strtolower(Auth::user()->role->name), ['admin', 'warehouse', 'sales', 'purchasing', 'route']))
+                <a href="{{ route('private.orders.index') }}" class="nav-link nav-link-active">Orders</a>
+            @endif
+            @if(Auth::user()->role && in_array(strtolower(Auth::user()->role->name), ['admin', 'warehouse', 'purchasing']))
+                <a href="{{ route('private.products.index') }}" class="nav-link">Products</a>
+            @endif
+            @if(Auth::user()->role && strtolower(Auth::user()->role->name) === 'admin')
+                <a href="{{ route('private.users.index') }}" class="nav-link">Users</a>
+                <a href="{{ route('private.customers.index') }}" class="nav-link">Customers</a>
+            @endif
+            {{-- Logout Link --}}
+            <form method="POST" action="{{ route('logout') }}" style="display: inline;">
+                @csrf
+                <a href="{{ route('logout') }}"
+                   onclick="event.preventDefault();
+                            this.closest('form').submit();"
+                   class="nav-link logout-link">
+                    Logout
+                </a>
+            </form>
+            <div class="user-avatar" style="background-color: {{ '#' . substr(md5(Auth::user()->name), 0, 6) }}">
+                {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+            </div>
         </div>
     </nav>
 
@@ -261,16 +395,8 @@
         @endif
 
         <div class="form-card">
-            <form action="{{ route('private.orders.store') }}" method="POST">
+            <form action="{{ route('private.orders.store') }}" method="POST" id="create-order-form" enctype="multipart/form-data">
                 @csrf
-                
-                <div class="form-group">
-                    <label for="order_number" class="form-label">Order Number</label>
-                    <input type="text" id="order_number" name="order_number" class="form-input" value="{{ old('order_number') }}" required>
-                    @error('order_number')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
 
                 <div class="form-group">
                     <label for="customer_id" class="form-label">Customer</label>
@@ -278,7 +404,7 @@
                         <option value="">Select a customer</option>
                         @foreach($customers as $customer)
                             <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                                {{ $customer->name }}
+                                {{ $customer->name }} ({{ $customer->customer_number }})
                             </option>
                         @endforeach
                     </select>
@@ -288,18 +414,10 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="invoice_number" class="form-label">Invoice Number</label>
-                    <input type="text" id="invoice_number" name="invoice_number" class="form-input" value="{{ old('invoice_number') }}" required>
-                    @error('invoice_number')
-                        <p class="error-message">{{ $message }}</p>
-                    @enderror
-                </div>
-
-                <div class="form-group">
                     <label for="status" class="form-label">Status</label>
                     <select id="status" name="status" class="form-select" required>
                         @foreach(App\Models\Order::getStatuses() as $status)
-                            <option value="{{ $status }}" {{ old('status') === $status ? 'selected' : '' }}>
+                            <option value="{{ $status }}" {{ old('status') === $status ? 'selected' : ('pending' === $status ? 'selected' : '') }}>
                                 {{ ucfirst($status) }}
                             </option>
                         @endforeach
@@ -309,17 +427,75 @@
                     @enderror
                 </div>
 
-                <div class="form-group">
-                    <label for="total_amount" class="form-label">Total Amount</label>
-                    <input type="number" step="0.01" id="total_amount" name="total_amount" class="form-input" value="{{ old('total_amount') }}" required>
-                    @error('total_amount')
+                <div class="product-selection-area">
+                    <h3 class="form-label">Products</h3>
+                    <div class="product-adder">
+                        <div class="form-group">
+                            <label for="product_select" class="form-label" style="font-size: 0.9em;">Select Product</label>
+                            <select id="product_select" class="form-select">
+                                <option value="">-- Choose Product --</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}" data-name="{{ $product->name }}" data-price="{{ $product->price }}" data-stock="{{ $product->stock }}">
+                                        {{ $product->name }} (Stock: {{ $product->stock }})
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="product_quantity" class="form-label" style="font-size: 0.9em;">Quantity</label>
+                            <input type="number" id="product_quantity" class="form-input" min="1" value="1">
+                        </div>
+                        <button type="button" id="add-product-btn" class="button button-secondary" style="padding: 0.6rem 1rem; align-self: flex-end;">Add</button>
+                    </div>
+                    @error('products')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
+                    <ul id="added-products-list" class="added-products-list"></ul>
+                </div>
+
+                <div id="order-summary" class="order-summary" style="display: none;">
+                    <h3>Order Summary</h3>
+                    <div id="summary-items"></div>
+                    <div class="summary-item summary-total">
+                        <span>Total</span>
+                        <span id="summary-total-amount">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <h3 class="section-title" style="margin-top: 2rem;">Order Photos</h3>
+                    <p class="order-photos-info" style="color: var(--secondary-color); font-size: 0.9rem; margin-bottom: 1rem;">
+                        Each order can have up to 2 photos: one during processing and one for delivery confirmation.
+                    </p>
+                    
+                    <!-- Processing Photo Section -->
+                    <div class="form-group image-upload">
+                        <label for="image_processing" class="form-label">Processing Photo</label>
+                        <input type="file" id="image_processing" name="image_processing" class="form-input" accept="image/*">
+                        <p class="image-help-text" style="font-size: 0.85rem; color: var(--secondary-color); margin-top: 0.5rem;">
+                            Upload a photo of the order being processed.
+                        </p>
+                        @error('image_processing')
+                            <p class="error-message">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    
+                    <!-- Delivery Photo Section - only shown if status is completed -->
+                    <div class="form-group image-upload" id="delivery_photo_section" style="display: none;">
+                        <label for="image_delivered" class="form-label">Delivery Confirmation Photo</label>
+                        <input type="file" id="image_delivered" name="image_delivered" class="form-input" accept="image/*">
+                        <p class="image-help-text" style="font-size: 0.85rem; color: var(--secondary-color); margin-top: 0.5rem;">
+                            Upload a photo confirming delivery to the customer.
+                        </p>
+                        @error('image_delivered')
+                            <p class="error-message">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label for="notes" class="form-label">Notes</label>
-                    <textarea id="notes" name="notes" class="form-input" rows="4">{{ old('notes') }}</textarea>
+                    <textarea id="notes" name="notes" class="form-input" rows="3">{{ old('notes') }}</textarea>
                     @error('notes')
                         <p class="error-message">{{ $message }}</p>
                     @enderror
@@ -332,5 +508,169 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const addProductBtn = document.getElementById('add-product-btn');
+            const productSelect = document.getElementById('product_select');
+            const quantityInput = document.getElementById('product_quantity');
+            const addedProductsList = document.getElementById('added-products-list');
+            const form = document.getElementById('create-order-form');
+            const orderSummary = document.getElementById('order-summary');
+            const summaryItems = document.getElementById('summary-items');
+            const summaryTotalAmount = document.getElementById('summary-total-amount');
+            const statusSelect = document.getElementById('status');
+            const deliveryPhotoSection = document.getElementById('delivery_photo_section');
+            
+            // Show/hide delivery photo section based on selected status
+            statusSelect.addEventListener('change', function() {
+                updatePhotoSections(this.value);
+            });
+            
+            // Function to update photo sections based on status
+            function updatePhotoSections(status) {
+                // Processing photo section always visible for new orders
+                
+                // Delivery photo section only visible for completed orders
+                if (status === 'completed') {
+                    deliveryPhotoSection.style.display = 'block';
+                } else {
+                    deliveryPhotoSection.style.display = 'none';
+                }
+            }
+            
+            // Initial check for status on page load
+            updatePhotoSections(statusSelect.value);
+            
+            let productIndex = 0;
+            let addedProductIds = new Set();
+            let totalAmount = 0;
+
+            function updateSummary() {
+                summaryItems.innerHTML = '';
+                totalAmount = 0;
+
+                // Get all hidden product inputs
+                const productInputs = form.querySelectorAll('input[name^="products"][name$="[id]"]');
+                
+                if (productInputs.length === 0) {
+                    orderSummary.style.display = 'none';
+                    return;
+                }
+                
+                orderSummary.style.display = 'block';
+                
+                productInputs.forEach(input => {
+                    const productId = input.value;
+                    const nameMatch = input.name.match(/products\[(\d+)\]/);
+                    
+                    if (nameMatch) {
+                        const index = nameMatch[1];
+                        const quantityInput = form.querySelector(`input[name="products[${index}][quantity]"]`);
+                        
+                        if (quantityInput) {
+                            const quantity = parseInt(quantityInput.value, 10);
+                            const productOption = productSelect.querySelector(`option[value="${productId}"]`);
+                            
+                            if (productOption) {
+                                const productName = productOption.getAttribute('data-name');
+                                const productPrice = parseFloat(productOption.getAttribute('data-price'));
+                                const itemTotal = productPrice * quantity;
+                                
+                                const summaryItem = document.createElement('div');
+                                summaryItem.classList.add('summary-item');
+                                summaryItem.innerHTML = `
+                                    <span>${productName} (${quantity} × $${productPrice.toFixed(2)})</span>
+                                    <span>$${itemTotal.toFixed(2)}</span>
+                                `;
+                                summaryItems.appendChild(summaryItem);
+                                
+                                totalAmount += itemTotal;
+                            }
+                        }
+                    }
+                });
+                
+                summaryTotalAmount.textContent = `$${totalAmount.toFixed(2)}`;
+                
+                // Update hidden total amount field
+                let totalAmountInput = form.querySelector('input[name="total_amount"]');
+                if (!totalAmountInput) {
+                    totalAmountInput = document.createElement('input');
+                    totalAmountInput.type = 'hidden';
+                    totalAmountInput.name = 'total_amount';
+                    form.appendChild(totalAmountInput);
+                }
+                totalAmountInput.value = totalAmount;
+            }
+
+            addProductBtn.addEventListener('click', function() {
+                const selectedOption = productSelect.options[productSelect.selectedIndex];
+                const productId = selectedOption.value;
+                const productName = selectedOption.getAttribute('data-name');
+                const productStock = parseInt(selectedOption.getAttribute('data-stock'), 10);
+                const productPrice = parseFloat(selectedOption.getAttribute('data-price'));
+                const quantity = parseInt(quantityInput.value, 10);
+
+                if (!productId) {
+                    alert('Please select a product.');
+                    return;
+                }
+                if (isNaN(quantity) || quantity < 1) {
+                    alert('Please enter a valid quantity (minimum 1).');
+                    return;
+                }
+                if (quantity > productStock) {
+                    alert(`Quantity (${quantity}) exceeds available stock (${productStock}) for ${productName}.`);
+                    return;
+                }
+                if (addedProductIds.has(parseInt(productId, 10))) {
+                    alert(`${productName} has already been added. You can remove it and add it again with a different quantity if needed.`);
+                    return;
+                }
+
+                const listItem = document.createElement('li');
+                listItem.classList.add('added-product-item');
+                listItem.setAttribute('data-product-id', productId);
+                listItem.innerHTML = `
+                    <span>${productName} - Qty: ${quantity}</span>
+                    <button type="button" class="remove-product-btn" title="Remove">&times;</button>
+                `;
+                addedProductsList.appendChild(listItem);
+
+                const idInput = document.createElement('input');
+                idInput.type = 'hidden';
+                idInput.name = `products[${productIndex}][id]`;
+                idInput.value = productId;
+                listItem.appendChild(idInput);
+
+                const quantityHiddenInput = document.createElement('input');
+                quantityHiddenInput.type = 'hidden';
+                quantityHiddenInput.name = `products[${productIndex}][quantity]`;
+                quantityHiddenInput.value = quantity;
+                listItem.appendChild(quantityHiddenInput);
+
+                addedProductIds.add(parseInt(productId, 10));
+                productIndex++;
+
+                productSelect.selectedIndex = 0;
+                quantityInput.value = 1;
+                
+                updateSummary();
+            });
+
+            addedProductsList.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('remove-product-btn')) {
+                    const itemToRemove = e.target.closest('.added-product-item');
+                    const productIdToRemove = parseInt(itemToRemove.getAttribute('data-product-id'), 10);
+                    
+                    itemToRemove.remove();
+                    addedProductIds.delete(productIdToRemove);
+                    
+                    updateSummary();
+                }
+            });
+        });
+    </script>
 </body>
 </html>
