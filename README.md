@@ -61,7 +61,13 @@ php artisan serve
 
 ## Credenciales de prueba
 
-![alt text]({F1341D62-714B-4835-99A1-D7DE00363DD2}.png)
+| Rol         | Email                                         | Contraseñas                               |
+|-------------|-----------------------------------------------|-------------------------------------------|
+| **Admin**   | admin@halcon.test                             | secret123                                 |
+| **Almacén** | warehouse@halcon.test                         | password123                               |
+| **Ventas**  | sales@halcon.test                             | password123                               |
+| **Compras** | purchasing@halcon.test                        | password123                               |
+| **Ruta**    | route@halcon.test                             | password123                               |
 
 ## Capturas de pantalla
 
