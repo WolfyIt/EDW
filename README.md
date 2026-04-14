@@ -59,14 +59,13 @@ php artisan serve
 
 Abre http://localhost:8000
 
-Credenciales de prueba
-
+## Credenciales de prueba
 
 ![alt text]({F1341D62-714B-4835-99A1-D7DE00363DD2}.png)
 
-Capturas de pantalla
+## Capturas de pantalla
 
-Licencia
+## Licencia
 Este proyecto está bajo la licencia MIT.
 
 
