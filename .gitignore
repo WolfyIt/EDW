@@ -1,23 +1,73 @@
-/.phpunit.cache
-/node_modules
-/public/build
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
+# =============================================
+# Laravel - Official & Recommended
+# =============================================
+
+# Environment
 .env
 .env.backup
 .env.production
-.phpactor.json
+.env.*.local
+
+# Laravel storage & cache
+/storage/*.key
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/framework/testing/*
+/storage/logs/*
+/storage/pail
+/bootstrap/cache/*
+
+# Public assets
+/public/storage
+/public/build
+/public/hot
+
+# Dependencies
+/vendor
+/node_modules
+
+# PHPUnit & testing
+.phpunit.cache
 .phpunit.result.cache
+phpunit.xml
+phpunit.xml.dist
+
+# Logs & debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE / Editor files
+.vscode/
+.idea/
+.phpactor.json
+/.fleet
+/.nova
+/.zed
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Laravel specific temporary files
+build
 Homestead.json
 Homestead.yaml
-npm-debug.log
-yarn-error.log
 /auth.json
-/.fleet
-/.idea
-/.nova
-/.vscode
-/.zed
+/server.php
+
+# Optional: si usas Sail o Docker
+.dockerignore
+sail
